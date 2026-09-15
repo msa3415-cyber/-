@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>보험심사 Q&A 조회</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;background:#f5f5f0;color:#1a1a1a;min-height:100vh;font-size:15px}
+
+/* 상단바 */
+.topbar{background:#fff;border-bottom:1px solid #e8e8e4;padding:0 1rem;display:flex;align-items:center;gap:8px;height:52px;position:sticky;top:0;z-index:100}
+.topbar h1{font-size:15px;font-weight:700;flex:1;color:#1a1a1a}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#aaa;flex-shrink:0}
+.sync-dot.on{background:#38a169}
+.sync-dot.ing{background:#d69e2e;animation:pulse .8s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+#syncMsg{font-size:11px;color:#888;white-space:nowrap}
+
+/* 검색 */
+.search-wrap{padding:12px;background:#fff;border-bottom:1px solid #e8e8e4;position:sticky;top:52px;z-index:99}
+.search-row{display:flex;gap:8px;margin-bottom:8px}
+.search-input{flex:1;padding:10px 14px;border:1.5px solid #e0e0d8;border-radius:10px;font-size:15px;font-family:inherit;background:#f8f8f6;outline:none;color:#1a1a1a}
+.search-input:focus{border-color:#1a1a1a;background:#fff}
+.clear-btn{padding:10px 12px;border:1.5px solid #e0e0d8;border-radius:10px;background:#fff;font-size:14px;cursor:pointer;color:#888}
+.filter-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.filter-row::-webkit-scrollbar{display:none}
+.filter-chip{flex-shrink:0;padding:5px 12px;border-radius:20px;font-size:12px;border:1px solid #ddd;background:#fff;color:#666;cursor:pointer;white-space:nowrap;font-family:inherit}
+.filter-chip.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+
+/* 목록 */
+.list-wrap{padding:10px 12px;max-width:700px;margin:0 auto}
+.count-bar{font-size:12px;color:#999;margin-bottom:8px;padding:0 2px}
+
+/* QA 카드 */
+.qa-card{background:#fff;border:1px solid #e8e8e4;border-radius:12px;margin-bottom:10px;overflow:hidden;border-left:3px solid transparent}
+.qa-card.imp-critical{border-left-color:#e24b4a}
+.qa-card.imp-high{border-left-color:#ef9f27}
+.qa-header{padding:14px 14px 12px;cursor:pointer;display:flex;align-items:flex-start;gap:8px;-webkit-user-select:none;user-select:none}
+.qa-q{flex:1;font-size:14px;font-weight:600;color:#1a1a1a;line-height:1.5}
+.qa-chevron{font-size:11px;color:#bbb;flex-shrink:0;margin-top:2px;transition:.2s}
+.qa-chevron.open{transform:rotate(180deg)}
+.qa-body{display:none;padding:0 14px 14px;border-top:1px solid #f0f0e8}
+.qa-body.open{display:block}
+.qa-answer{font-size:14px;color:#333;line-height:1.8;margin-top:10px;white-space:pre-wrap;word-break:break-word}
+.qa-meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.b-blue{background:#dbeafe;color:#1d4ed8}
+.b-green{background:#dcfce7;color:#15803d}
+.b-amber{background:#fef3c7;color:#92400e}
+.b-purple{background:#ede9fe;color:#6d28d9}
+.b-gray{background:#f3f4f6;color:#374151}
+.b-coral{background:#fee2e2;color:#991b1b}
+.b-red{background:#fee2e2;color:#991b1b}
+.b-teal{background:#ccfbf1;color:#0f766e}
+.qa-writer{font-size:11px;color:#bbb;margin-top:6px}
+.qa-answer img{max-width:100%;border-radius:6px;margin:4px 0;display:block}
+
+/* 링크 */
+.links-wrap{margin-top:8px;display:flex;flex-wrap:wrap;gap:4px}
+.link-chip{display:inline-flex;align-items:center;gap:4px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:4px 10px;font-size:12px;color:#1d4ed8;text-decoration:none}
+
+/* 첨부파일 */
+.files-wrap{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.file-chip{display:inline-flex;align-items:center;gap:5px;background:#f5f5f0;border:1px solid #e0e0d8;border-radius:7px;padding:6px 10px;font-size:12px;color:#444;cursor:pointer}
+.file-chip:active{background:#e8e8e4}
+.file-chip .no-data{color:#e53e3e;font-size:10px;margin-left:2px}
+
+/* 미리보기 */
+.preview-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;flex-direction:column}
+.preview-overlay.open{display:flex}
+.preview-bar{background:#1a1a1a;color:#fff;padding:10px 14px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.preview-bar .fname{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preview-bar button{background:rgba(255,255,255,.15);border:none;color:#fff;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;flex-shrink:0}
+.preview-content{flex:1;overflow:auto;background:#fff;-webkit-overflow-scrolling:touch}
+.preview-content img{max-width:100%;display:block;margin:0 auto}
+.preview-content iframe{width:100%;height:100%;min-height:70vh;border:none;display:block}
+.preview-content pre{padding:1rem;font-size:12px;line-height:1.7;white-space:pre-wrap;word-break:break-all;font-family:monospace}
+.preview-content table{width:100%;border-collapse:collapse;font-size:12px}
+.preview-content th{background:#f0f0e8;padding:6px 10px;text-align:left;border:1px solid #ddd;white-space:nowrap}
+.preview-content td{padding:5px 10px;border:1px solid #e8e8e4;white-space:nowrap}
+.preview-zoom{background:#1a1a1a;padding:8px 14px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.zoom-btn{background:rgba(255,255,255,.15);border:none;color:#fff;padding:6px 14px;border-radius:6px;font-size:14px;cursor:pointer;flex:1;font-family:inherit}
+.zoom-label{color:#aaa;font-size:12px;min-width:40px;text-align:center}
+.no-preview{text-align:center;padding:3rem 1rem;color:#888}
+.no-preview .icon{font-size:48px;margin-bottom:12px}
+.no-preview p{font-size:14px;line-height:1.8}
+
+/* 빈 상태 */
+.empty{text-align:center;padding:4rem 1rem;color:#aaa}
+.empty .icon{font-size:48px;margin-bottom:12px}
+.empty p{font-size:14px;line-height:2}
+
+/* 로딩 */
+.loading{text-align:center;padding:3rem;color:#aaa;font-size:14px}
+
+/* 검색 하이라이트 */
+mark{background:#fde047;border-radius:2px;padding:0 2px;color:inherit}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🏥 보험심사 Q&A</h1>
+  <div class="sync-dot ing" id="syncDot"></div>
+  <span id="syncMsg">연결 중...</span>
+</div>
+
+<div class="search-wrap">
+  <div class="search-row">
+    <input class="search-input" id="searchInput" type="search" placeholder="🔍 질문, 답변, 태그 검색..." oninput="doSearch()" autocomplete="off">
+    <button class="clear-btn" onclick="clearSearch()">✕</button>
+  </div>
+  <div class="filter-row" id="filterRow">
+    <button class="filter-chip active" data-cat="" onclick="setCat(this)">전체</button>
+    <button class="filter-chip" data-cat="심사기준" onclick="setCat(this)">심사기준</button>
+    <button class="filter-chip" data-cat="입원급여" onclick="setCat(this)">입원급여</button>
+    <button class="filter-chip" data-cat="외래급여" onclick="setCat(this)">외래급여</button>
+    <button class="filter-chip" data-cat="약제급여" onclick="setCat(this)">약제급여</button>
+    <button class="filter-chip" data-cat="비급여" onclick="setCat(this)">비급여</button>
+    <button class="filter-chip" data-cat="청구서류" onclick="setCat(this)">청구서류</button>
+    <button class="filter-chip" data-cat="요양기관" onclick="setCat(this)">요양기관</button>
+    <button class="filter-chip" data-cat="행정처분" onclick="setCat(this)">행정처분</button>
+    <button class="filter-chip" data-cat="기타" onclick="setCat(this)">기타</button>
+  </div>
+</div>
+
+<div class="list-wrap">
+  <div class="count-bar" id="countBar"></div>
+  <div id="qaList"><div class="loading">⏳ 데이터 불러오는 중...</div></div>
+</div>
+
+<!-- 미리보기 -->
+<div class="preview-overlay" id="previewOverlay">
+  <div class="preview-bar">
+    <span class="fname" id="prevFname"></span>
+    <button onclick="dlPreview()">⬇ 저장</button>
+    <button onclick="closePreview()">✕ 닫기</button>
+  </div>
+  <div class="preview-zoom">
+    <button class="zoom-btn" onclick="changeZoom(-20)">－</button>
+    <span class="zoom-label" id="zoomLabel">100%</span>
+    <button class="zoom-btn" onclick="changeZoom(20)">＋</button>
+    <button class="zoom-btn" style="flex:0;padding:6px 10px" onclick="changeZoom(0)">초기화</button>
+  </div>
+  <div class="preview-content" id="prevContent"></div>
+</div>
+
+<script>
+// ── Firebase 설정 ──
+const FB_CONFIG = {
+  apiKey:      "AIzaSyDF3QP6dOmDRUhoh05Vju9P1AUusyyhK2g",
+  databaseURL: "https://insurance-qa-90ec2-default-rtdb.firebaseio.com",
+  projectId:   "insurance-qa-90ec2",
+  appId:       "1:393463415123:web:7d5b84fe54313298c061a6"
+};
+
+let db = [];
+let currentCat = '';
+let currentZoom = 100;
+let prevFileData = null;
+
+const CAT_BADGE = {
+  입원급여:'b-blue',외래급여:'b-green',약제급여:'b-teal',비급여:'b-amber',
+  요양기관:'b-purple',청구서류:'b-coral',심사기준:'b-purple',행정처분:'b-red',기타:'b-gray'
+};
+
+// ── Firebase 연결 ──
+firebase.initializeApp(FB_CONFIG);
+const fbDB  = firebase.database();
+const fbRef = fbDB.ref('qaItems');
+
+fbDB.ref('.info/connected').on('value', snap=>{
+  const dot = document.getElementById('syncDot');
+  const msg = document.getElementById('syncMsg');
+  if(snap.val()){
+    dot.className = 'sync-dot on';
+    msg.textContent = '실시간 연결됨';
+  } else {
+    dot.className = 'sync-dot ing';
+    msg.textContent = '연결 중...';
+  }
+});
+
+fbRef.on('value', snap=>{
+  const raw = snap.val();
+  db = raw ? Object.values(raw).sort((a,b)=>(b.ts||b.id)-(a.ts||a.id)) : [];
+  renderList();
+});
+
+// ── 검색/필터 ──
+function doSearch(){ renderList(); }
+
+function clearSearch(){
+  document.getElementById('searchInput').value = '';
+  renderList();
+}
+
+function setCat(el){
+  currentCat = el.dataset.cat;
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderList();
+}
+
+function hl(text, q){
+  if(!q || !text) return text||'';
+  const re = new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');
+  return String(text).replace(re,'<mark>$1</mark>');
+}
+
+function escHtml(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function fileIcon(name){
+  const e=(name||'').split('.').pop().toLowerCase();
+  if(['xlsx','xls','csv'].includes(e)) return '📊';
+  if(['docx','doc','hwp'].includes(e)) return '📝';
+  if(['pdf'].includes(e)) return '📄';
+  if(['png','jpg','jpeg','gif','bmp','webp'].includes(e)) return '🖼️';
+  return '📎';
+}
+
+// ── 렌더링 ──
+function renderList(){
+  const q = (document.getElementById('searchInput').value||'').toLowerCase().trim();
+  const isSearching = !!(q || currentCat);
+
+  const filtered = db.filter(item=>{
+    const txt = (item.aText||'').toLowerCase();
+    const mq = !q || item.q.toLowerCase().includes(q) || txt.includes(q) || (item.tags||[]).some(t=>t.toLowerCase().includes(q));
+    const mc = !currentCat || item.cat === currentCat;
+    return mq && mc;
+  });
+
+  document.getElementById('countBar').textContent = `검색결과 ${filtered.length}건 / 전체 ${db.length}건`;
+
+  const box = document.getElementById('qaList');
+  if(!filtered.length){
+    box.innerHTML = '<div class="empty"><div class="icon">📭</div><p>검색 결과가 없습니다</p></div>';
+    return;
+  }
+
+  const impLabel = {critical:'🔴 필수 ', high:'⭐ ', normal:''};
+
+  box.innerHTML = filtered.map(item=>{
+    const impClass = item.importance==='critical'?'imp-critical':item.importance==='high'?'imp-high':'';
+    const ansClass = isSearching ? 'qa-body open' : 'qa-body';
+    const chevClass = isSearching ? 'qa-chevron open' : 'qa-chevron';
+
+    // 링크
+    const linksHtml = (item.links&&item.links.length)
+      ? `<div class="links-wrap">${item.links.map(l=>`<a class="link-chip" href="${escHtml(l.url)}" target="_blank">🔗 ${escHtml(l.label||l.url)}</a>`).join('')}</div>` : '';
+
+    // 첨부파일
+    const filesHtml = (item.files&&item.files.length)
+      ? `<div class="files-wrap">${item.files.map((f,fi)=>
+          f.data
+            ? `<div class="file-chip" onclick="openPreview(${item.id},${fi})">${fileIcon(f.name)} ${escHtml(f.name)}</div>`
+            : `<div class="file-chip" style="opacity:.5">${fileIcon(f.name)} ${escHtml(f.name)}<span class="no-data">PC에서 확인</span></div>`
+        ).join('')}</div>` : '';
+
+    return `<div class="qa-card ${impClass}">
+      <div class="qa-header" onclick="toggleAns(this)">
+        <div class="qa-q">${impLabel[item.importance]||''}${hl(item.q,q)}</div>
+        <div class="${chevClass}">▼</div>
+      </div>
+      <div class="${ansClass}">
+        <div class="qa-answer">${item.a||''}</div>
+        ${linksHtml}
+        ${filesHtml}
+        <div class="qa-meta">
+          <span class="badge ${CAT_BADGE[item.cat]||'b-gray'}">${item.cat||''}</span>
+          ${(item.tags||[]).map(t=>`<span class="badge b-gray">${hl(t,q)}</span>`).join('')}
+        </div>
+        <div class="qa-writer">${item.writer||''} · ${item.date||''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleAns(header){
+  const body = header.nextElementSibling;
+  const chev = header.querySelector('.qa-chevron');
+  const isOpen = body.classList.toggle('open');
+  chev.classList.toggle('open', isOpen);
+}
+
+// ── 미리보기 ──
+function openPreview(itemId, fi){
+  const item = db.find(x=>x.id===itemId);
+  if(!item||!item.files[fi]||!item.files[fi].data) return;
+  const f = item.files[fi];
+  prevFileData = f;
+  currentZoom = 100;
+  document.getElementById('prevFname').textContent = f.name;
+  document.getElementById('zoomLabel').textContent = '100%';
+
+  const content = document.getElementById('prevContent');
+  content.innerHTML = '';
+  const ext = f.name.split('.').pop().toLowerCase();
+
+  if(['png','jpg','jpeg','gif','bmp','webp'].includes(ext)){
+    const img = document.createElement('img');
+    img.src = f.data;
+    img.style.cssText = 'width:100%;display:block';
+    content.appendChild(img);
+  } else if(ext === 'pdf'){
+    const iframe = document.createElement('iframe');
+    iframe.src = f.data;
+    content.appendChild(iframe);
+  } else if(ext === 'csv'){
+    try{
+      const raw = decodeURIComponent(escape(atob(f.data.split(',')[1])));
+      const rows = raw.trim().split('\n').map(r=>r.split(','));
+      let html = '<div style="overflow:auto;padding:1rem"><table><thead><tr>';
+      rows[0].forEach(c=>{ html+=`<th>${escHtml(c.trim())}</th>`; });
+      html += '</tr></thead><tbody>';
+      for(let i=1;i<rows.length;i++){
+        html+='<tr>';rows[i].forEach(c=>{html+=`<td>${escHtml(c.trim())}</td>`;});html+='</tr>';
+      }
+      html += '</tbody></table></div>';
+      content.innerHTML = html;
+    }catch(e){ content.innerHTML = noPreviewHtml(f.name); }
+  } else if(ext === 'txt'){
+    try{
+      const raw = decodeURIComponent(escape(atob(f.data.split(',')[1])));
+      const pre = document.createElement('pre');
+      pre.textContent = raw;
+      content.appendChild(pre);
+    }catch(e){ content.innerHTML = noPreviewHtml(f.name); }
+  } else {
+    content.innerHTML = noPreviewHtml(f.name);
+  }
+
+  document.getElementById('previewOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function noPreviewHtml(name){
+  return `<div class="no-preview"><div class="icon">${fileIcon(name)}</div><p>${escHtml(name)}<br>이 파일 형식은 미리보기를 지원하지 않습니다.<br>저장 버튼으로 다운로드하세요.</p></div>`;
+}
+
+function closePreview(){
+  document.getElementById('previewOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+  prevFileData = null;
+}
+
+function dlPreview(){
+  if(!prevFileData) return;
+  const a = document.createElement('a');
+  a.href = prevFileData.data;
+  a.download = prevFileData.name;
+  a.click();
+}
+
+function changeZoom(delta){
+  if(delta === 0){ currentZoom = 100; }
+  else { currentZoom = Math.min(300, Math.max(30, currentZoom+delta)); }
+  document.getElementById('zoomLabel').textContent = currentZoom+'%';
+  const img = document.querySelector('#prevContent img');
+  const pre = document.querySelector('#prevContent pre');
+  const table = document.querySelector('#prevContent table');
+  if(img){ img.style.width = currentZoom+'%'; img.style.maxWidth='none'; }
+  if(pre){ pre.style.fontSize = Math.round(12*currentZoom/100)+'px'; }
+  if(table){ table.style.fontSize = Math.round(12*currentZoom/100)+'px'; }
+}
+
+// 뒤로가기로 미리보기 닫기
+window.addEventListener('popstate', ()=>{
+  if(document.getElementById('previewOverlay').classList.contains('open')) closePreview();
+});
+</script>
+</body>
+</html>
