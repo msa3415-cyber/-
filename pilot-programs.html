@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>시범사업 통합 정리</title>
+<style>
+  :root{
+    --navy:#0F2A44;
+    --navy-2:#173A5E;
+    --teal:#0E7C86;
+    --teal-light:#E4F3F3;
+    --red:#B93B3B;
+    --red-light:#FBEAEA;
+    --bg:#F4F6F8;
+    --card:#FFFFFF;
+    --line:#DFE5EA;
+    --text:#1C2733;
+    --text-mute:#5B6B78;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic",Roboto,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding-bottom:40px;
+  }
+  header{
+    background:linear-gradient(135deg,var(--navy),var(--navy-2));
+    color:#fff;
+    padding:22px 20px;
+  }
+  header h1{margin:0 0 4px;font-size:19px;}
+  header p{margin:0;font-size:12.5px;color:#c7d3e0;}
+
+  .wrap{max-width:1080px;margin:0 auto;padding:18px 16px;}
+
+  .searchbar{
+    display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;
+  }
+  .searchbar input{
+    flex:1;min-width:220px;
+    padding:11px 14px;
+    border:1px solid var(--line);
+    border-radius:9px;
+    font-size:14px;
+    background:var(--card);
+  }
+  .searchbar input:focus{outline:2px solid var(--teal);outline-offset:-1px;}
+  .count-badge{
+    align-self:center;
+    font-size:12.5px;
+    color:var(--text-mute);
+    padding:0 4px;
+  }
+
+  .tabs{
+    display:flex;gap:4px;margin-bottom:16px;
+    border-bottom:1px solid var(--line);
+    overflow-x:auto;
+  }
+  .tab{
+    padding:9px 14px;
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--text-mute);
+    background:none;border:none;
+    cursor:pointer;
+    white-space:nowrap;
+    border-bottom:2px solid transparent;
+  }
+  .tab.active{color:var(--navy);border-bottom-color:var(--teal);}
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  /* 카드형 목록 (전체 시범사업) */
+  .prog-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    margin-bottom:12px;
+    overflow:hidden;
+  }
+  .prog-head{
+    padding:14px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    cursor:pointer;
+    background:#fbfcfd;
+  }
+  .prog-head:hover{background:var(--teal-light);}
+  .prog-title{font-size:15px;font-weight:700;color:var(--navy);}
+  .prog-sub{font-size:12px;color:var(--text-mute);margin-top:2px;}
+  .chev{font-size:13px;color:var(--text-mute);transition:transform .15s ease;flex-shrink:0;}
+  .prog-card.open .chev{transform:rotate(90deg);}
+  .prog-body{display:none;padding:2px 16px 16px;}
+  .prog-card.open .prog-body{display:block;}
+
+  .field{
+    display:grid;
+    grid-template-columns:110px 1fr;
+    gap:10px;
+    padding:9px 0;
+    border-top:1px solid var(--line);
+    font-size:13px;
+  }
+  .field:first-child{border-top:none;}
+  .field .k{color:var(--text-mute);font-weight:600;}
+  .field .v{white-space:pre-line;line-height:1.55;}
+  .field .v.empty{color:#b7bfc7;}
+  .tag-burden{
+    display:inline-block;
+    background:var(--red-light);color:var(--red);
+    border-radius:6px;padding:1px 8px;font-size:12px;font-weight:700;
+  }
+
+  /* 비교 요약 테이블 */
+  table{width:100%;border-collapse:collapse;background:var(--card);font-size:13px;}
+  caption{text-align:left;font-size:13.5px;font-weight:700;color:var(--navy);margin-bottom:8px;}
+  th,td{border:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top;line-height:1.5;}
+  th{background:var(--navy);color:#fff;font-weight:600;font-size:12.5px;}
+  tbody tr:nth-child(even){background:#fafbfc;}
+  .table-scroll{overflow-x:auto;border-radius:10px;border:1px solid var(--line);margin-bottom:20px;}
+  .table-scroll table{border:none;}
+  .table-scroll th,.table-scroll td{border:none;border-bottom:1px solid var(--line);}
+  .num{color:var(--teal);font-weight:700;}
+
+  .section-title{
+    font-size:14.5px;font-weight:700;color:var(--navy);
+    margin:22px 0 10px;
+    padding-left:10px;border-left:3px solid var(--teal);
+  }
+  .note{
+    background:var(--teal-light);
+    border:1px solid #cfe6e6;
+    border-radius:10px;
+    padding:12px 14px;
+    font-size:12.5px;
+    color:#245055;
+    line-height:1.6;
+    margin-bottom:16px;
+  }
+  .card-block{
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:16px;margin-bottom:14px;
+  }
+  .card-block h3{margin:0 0 8px;font-size:14px;color:var(--navy);}
+  .faq-item{border-top:1px solid var(--line);padding:10px 0;}
+  .faq-item:first-child{border-top:none;}
+  .faq-q{font-weight:700;font-size:13px;margin-bottom:4px;}
+  .faq-a{font-size:12.5px;color:var(--text-mute);line-height:1.6;}
+  .empty-state{
+    text-align:center;color:var(--text-mute);font-size:13px;
+    padding:40px 10px;
+  }
+  code.mt{
+    background:#eef2f5;border:1px solid var(--line);border-radius:5px;
+    padding:1px 6px;font-family:var(--mono);font-size:12px;color:var(--navy);
+  }
+
+  .btn{
+    border:none;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;
+    cursor:pointer;white-space:nowrap;font-family:inherit;
+  }
+  .btn-primary{background:var(--navy);color:#fff;}
+  .btn-primary:hover{background:var(--navy-2);}
+  .btn-ghost{background:none;border:1px solid var(--line);color:var(--text-mute);}
+  .btn-ghost:hover{background:#eef1f3;}
+  .btn-sm{padding:6px 10px;font-size:12px;border-radius:7px;}
+  .btn-edit{background:var(--teal-light);color:var(--teal);}
+  .btn-edit:hover{background:#d3ecec;}
+  .btn-del{background:var(--red-light);color:var(--red);}
+  .btn-del:hover{background:#f6d6d6;}
+  .btn-save{background:var(--teal);color:#fff;}
+  .btn-save:hover{background:#0b6870;}
+  .btn-cancel{background:none;border:1px solid var(--line);color:var(--text-mute);}
+
+  .card-actions{
+    display:flex;gap:8px;padding:0 16px 14px;
+    border-top:1px dashed var(--line);
+    margin-top:6px;padding-top:12px;
+  }
+
+  .edit-grid{padding:4px 16px 16px;display:grid;gap:10px;}
+  .edit-row{display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:start;}
+  .edit-row label{font-size:12.5px;color:var(--text-mute);font-weight:600;padding-top:9px;}
+  .edit-row input, .edit-row textarea{
+    width:100%;border:1px solid var(--line);border-radius:7px;
+    padding:8px 10px;font-size:13px;font-family:inherit;resize:vertical;
+  }
+  .edit-row input:focus, .edit-row textarea:focus{outline:2px solid var(--teal);outline-offset:-1px;}
+  .edit-actions{display:flex;gap:8px;justify-content:flex-end;padding-top:4px;}
+
+  .save-toast{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:var(--navy);color:#fff;padding:9px 18px;border-radius:20px;
+    font-size:12.5px;opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:50;
+  }
+  .save-toast.show{opacity:1;}
+
+  .prog-card.just-saved{
+    border-color:var(--teal);
+    box-shadow:0 0 0 3px rgba(14,124,134,.15);
+  }
+  .saved-badge{
+    font-size:11px;font-weight:700;color:var(--teal);
+    background:var(--teal-light);border-radius:20px;padding:2px 9px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>시범사업 통합 정리</h1>
+  <p>가정간호·방문진료·만성질환·장애인주치의·치매 등 주요 시범사업 청구 기준 모음</p>
+</header>
+
+<div class="wrap">
+
+  <div class="tabs">
+    <button class="tab active" data-tab="list">전체 시범사업 (18)</button>
+    <button class="tab" data-tab="compare">본인부담률 비교</button>
+    <button class="tab" data-tab="visit">방문진료 청구지침 상세</button>
+  </div>
+
+  <!-- 탭 1: 전체 시범사업 목록 -->
+  <div class="panel active" id="panel-list">
+    <div class="searchbar">
+      <input type="text" id="searchInput" placeholder="시범사업명, 진단명, 코드로 검색 (예: 치매, S017, 방문진료)">
+      <span class="count-badge" id="countBadge"></span>
+      <button class="btn btn-primary" id="addBtn">+ 새 시범사업 추가</button>
+      <button class="btn btn-ghost" id="resetBtn">기본값으로 초기화</button>
+    </div>
+    <div id="progList"></div>
+  </div>
+
+  <!-- 탭 2: 본인부담률 비교 -->
+  <div class="panel" id="panel-compare">
+    <div class="note">출처: 일차의료 방문진료 수가·장애인건강주치의·치매관리주치의 시범사업 지침 (2024년 기준)</div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>구분</th><th>시범사업명</th><th>건강보험</th><th>차상위 계층</th><th>의료급여</th><th>특이사항 및 예외 본인부담</th><th>청구 특정기호(MT002)</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td><td><b>일차의료 방문진료 수가<br>시범사업</b></td><td class="num">30%</td><td>1종/2종: 5%</td><td>1종/2종: 5%</td>
+            <td>• 장기요양 1·2등급 와상환자: 15%
+• 요양비(산소치료, 인공호흡기) 급여 대상자: 15%
+• 거동불편 비대상자 요청 시: 100%(전액본인부담)
+• 환자관리료/방문료 등 별도 규정 준수</td>
+            <td>• 일반: <code class="mt">S017</code>
+• 장기요양 1·2등급 와상: <code class="mt">S048</code>
+• 요양비 대상자: <code class="mt">S049</code>
+• 365회 초과 외래: <code class="mt">F029</code> 병기</td>
+          </tr>
+          <tr>
+            <td>2</td><td><b>장애인건강주치의<br>시범사업</b></td><td class="num">10%</td><td>면제(0%)</td><td>면제(0%)</td>
+            <td>• 환자관리료: 공단 전액 부담(0%)
+• 맞춤형 검진바우처: 공단 전액 청구(0%)
+• 본인부담금 산정특례 적용 불가</td>
+            <td>• 주치의 대상: <code class="mt">S010</code>
+• 맞춤형 검진바우처: <code class="mt">S036</code></td>
+          </tr>
+          <tr>
+            <td>3</td><td><b>치매관리주치의<br>시범사업</b></td><td class="num">20%</td><td>자격에 따른 본인부담률 적용<br>(차상위/급여 자격 기준)</td><td>자격에 따른 본인부담률 적용<br>(의료급여 자격 기준)</td>
+            <td>• 산정특례 적용 가능 (특례 적용 시 더 낮은 본인부담률 우선 적용)</td>
+            <td>• 치매관리주치의 대상: <code class="mt">S045</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-title">공통 및 산정기준 핵심 요약</div>
+    <div class="card-block">
+      <h3>1. 방문진료료 구분 (공통 원칙)</h3>
+      <div class="faq-a">
+        • 방문진료료 Ⅰ(포괄): 진찰·행위·약제·치료재료 비용이 모두 포함되어 타 진료내역 추가 산정 불가 (단, 원외처방전은 발급 가능하며 분리청구)<br>
+        • 방문진료료 Ⅱ(비포괄): 별도로 이루어진 행위·약제·치료재료 등의 비용을 건강보험/의료급여 산정기준에 따라 별도 산정 가능 (단, 분리청구 필수)
+      </div>
+    </div>
+    <div class="card-block">
+      <h3>2. 동일일 외래 및 방문진료/가정간호 동시 실시 시 청구 방법</h3>
+      <div class="faq-a">동일 날 동일 기관에서 외래진료와 방문진료를 모두 실시한 경우 명세서를 분리하여 작성하며, 방문진료 명세서의 총내원일수는 '0'으로 기재</div>
+    </div>
+    <div class="card-block">
+      <h3>3. 외래진료 횟수 합산</h3>
+      <div class="faq-a">방문진료 횟수도 연간 외래진료 횟수(365회 초과 여부 판단)에 포함됨</div>
+    </div>
+  </div>
+
+  <!-- 탭 3: 방문진료 청구지침 상세 -->
+  <div class="panel" id="panel-visit">
+    <div class="note">2024년 11월 지침 기준 | 보건복지부 · 건강보험심사평가원</div>
+
+    <div class="section-title">1. 청구 기본 원칙 및 명세서 작성 요령</div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th style="width:16%">구분</th><th style="width:26%">주요 내용</th><th>세부 작성 지침 및 예외사항</th></tr></thead>
+        <tbody>
+          <tr><td>청구 매체/시기</td><td>전산매체 / 정보통신망 청구</td><td>방문진료료는 요양급여비용 청구 가능 시기로부터 2개월 이내에 청구</td></tr>
+          <tr><td>심사청구서 작성</td><td>통합 심사청구서 작성</td><td>시범사업 명세서와 비시범사업 명세서는 하나의 심사청구서에 작성</td></tr>
+          <tr><td>명세서 작성 원칙</td><td>1인 1명세서 원칙(예외 유의)</td><td>동일 환자는 방문진료료와 진료내역을 하나의 명세서로 작성<br>*단, 동일 날 동일 기관에서 내원진료와 방문진료 동시 실시 시 명세서 분리 작성(방문진료 명세서 총내원일수는 '0'으로 기재)</td></tr>
+          <tr><td>특정내역 기재(MT002)</td><td>명일련 특정기호 필수 기재</td><td>명일련 단위 특정내역 구분코드(MT002)란에 대상자별 특정기호(S017, S048, S049 등) 단독 기재</td></tr>
+          <tr><td>사전 절차(필수)</td><td>점검서식 우선 제출</td><td>명세서 제출 전 심평원 '시범사업 자료제출 시스템'에 [방문진료 점검서식]을 먼저 제출해야 함</td></tr>
+          <tr><td>진료내역 기재</td><td>01항 03목 응급 및 회송료 등</td><td>진료내역 줄단위에 기재하고 면허종류/면허번호란에 방문진료 시행 의사의 정보 기재</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-title">2. 방문진료 수가 코드 및 가산 산정기준 (2024년 기준)</div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>분류코드</th><th>종별</th><th>수가명</th><th>포함범위 및 산정 원칙</th><th>상대가치점수</th><th>24년 수가(원)</th></tr></thead>
+        <tbody>
+          <tr><td><code class="mt">IA001</code></td><td>의원</td><td>방문진료료 Ⅰ</td><td>행위·약제 및 치료재료 비용 포함(별도 산정 불가)</td><td>1377.81</td><td class="num">128,960</td></tr>
+          <tr><td><code class="mt">IA003</code></td><td>병원급</td><td>방문진료료 Ⅰ</td><td>행위·약제 및 치료재료 비용 포함(지방의료원 등)</td><td>1677.81</td><td class="num">136,240</td></tr>
+          <tr><td><code class="mt">IA002</code></td><td>의원</td><td>방문진료료 Ⅱ</td><td>행위·약제·치료재료 미포함(진찰료 외 행위/약제/재료 별도 산정 가능)</td><td>958.51</td><td class="num">89,720</td></tr>
+          <tr><td><code class="mt">IA004</code></td><td>병원급</td><td>방문진료료 Ⅱ</td><td>행위·약제·치료재료 미포함(진찰료 외 행위/약제/재료 별도 산정 가능)</td><td>1158.51</td><td class="num">94,070</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th style="width:16%">구분(자릿수)</th><th>가산/감산 조건</th><th>산정 점수/비율</th><th>산정코드 기재방법 및 예시</th></tr></thead>
+        <tbody>
+          <tr><td rowspan="4">첫 번째 자리<br>(취약지/소아)</td><td>의료접근성 취약지 기관</td><td>방문Ⅰ +275.56점 / 방문Ⅱ +191.70점</td><td>첫 번째 자리에 'R' 기재 (예: RA001)</td></tr>
+          <tr><td>1세 미만 소아</td><td>+21.56점 가산</td><td>첫 번째 자리에 '1' 기재 (예: 1A001)</td></tr>
+          <tr><td>1세 이상~6세 미만 소아</td><td>+8.88점 가산</td><td>첫 번째 자리에 '6' 기재 (예: 6A001)</td></tr>
+          <tr><td>취약지+1세 미만 소아 동시적용</td><td>취약지가산 + 소아가산 복합</td><td>첫 번째 자리에 'A' 기재 (예: AA001)</td></tr>
+          <tr><td>두 번째 자리<br>(동반인력)</td><td>의사 외 동반인력 동행(간호사, PT 등)</td><td>+350.69점 가산</td><td>두 번째 자리에 '1' 기재 (예: IA001010)</td></tr>
+          <tr><td rowspan="2">세 번째 자리<br>(동일건물/세대)</td><td>동일 건물 환자 동시/연속 방문</td><td>소정점수의 75% 산정(25% 감산)</td><td>세 번째 자리에 '3' 기재 (예: IA001003)</td></tr>
+          <tr><td>동일 세대 환자 동시/연속 방문</td><td>첫 환자 100%, 2번째 환자부터 50%</td><td>두 번째 환자부터 세 번째 자리에 '4' 기재 (예: IA001004)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-title">3. 주요 청구 유형별 작성 예시 (의원 기준)</div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>No</th><th>환자 및 방문 유형</th><th>수가코드</th><th>단가(원)</th><th>특정기호(MT002)</th><th>본인부담률</th><th>핵심 작성 요령 및 산정 특징</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>일반 거동불편 환자</td><td><code class="mt">IA001</code></td><td>128,960</td><td><code class="mt">S017</code></td><td class="num">30%</td><td>일반적인 거동불편 재택환자 방문진료</td></tr>
+          <tr><td>2</td><td>건강보험 장기요양 1·2등급 와상환자</td><td><code class="mt">IA001</code></td><td>128,960</td><td><code class="mt">S048</code></td><td class="num">15%</td><td>S048 특정기호 단독 기재시 본인부담금 15% 경감 적용</td></tr>
+          <tr><td>3</td><td>건강보험 요양비(산소/인공호흡기) 대상자</td><td><code class="mt">IA001</code></td><td>128,960</td><td><code class="mt">S049</code></td><td class="num">15%</td><td>S049 특정기호 단독 기재시 본인부담금 15% 경감 적용</td></tr>
+          <tr><td>4</td><td>거동 불요 요청 환자(전액본인부담)</td><td><code class="mt">IA001</code></td><td>128,960</td><td><code class="mt">S017</code></td><td class="num">100%</td><td>환자/보호자 요청에 의한 방문진료 시 수가 전액(100/100) 환자 부담</td></tr>
+          <tr><td>5</td><td>동일 건물 내 환자 방문</td><td><code class="mt">IA001003</code></td><td>96,720</td><td><code class="mt">S017</code></td><td class="num">30%</td><td>소정점수의 75% 적용(산정코드 3번째 자리에 '3')</td></tr>
+          <tr><td>6</td><td>동일 세대 두 번째 환자 방문</td><td><code class="mt">IA001004</code></td><td>64,480</td><td><code class="mt">S017</code></td><td class="num">30%</td><td>첫 환자는 100%, 두 번째 환자부터 50% 적용('4')</td></tr>
+          <tr><td>7</td><td>의사 외 인력(간호사 등) 동반 방문</td><td><code class="mt">IA001010</code></td><td>161,790</td><td><code class="mt">S017</code></td><td class="num">30%</td><td>+350.69점 가산 적용(산정코드 2번째 자리에 '1')</td></tr>
+          <tr><td>8</td><td>연간 외래 365회 초과 대상자</td><td><code class="mt">IA001</code></td><td>128,960</td><td><code class="mt">F029, S017</code></td><td class="num">30%</td><td>MT002란 첫 줄에 'F029' 기재 후, 다음 줄에 'S017' 연속 기재</td></tr>
+          <tr><td>9</td><td>차상위 1·2종 / 의료급여 수급권자</td><td><code class="mt">IA001</code></td><td>128,960</td><td><code class="mt">S017</code></td><td class="num">5%</td><td>차상위 경감(E) 및 의료급여 대상자는 총액의 5%만 본인부담</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-title">4. 주요 FAQ 및 청구 제한 한도</div>
+    <div class="card-block">
+      <div class="faq-item">
+        <div class="faq-q">Q. 의사 1인당 월 방문진료 산정 횟수 한도는?</div>
+        <div class="faq-a">의사 1인당 월 60회까지 산정 가능. (단, '장기요양 재택의료센터 시범기관'은 월 100회)</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Q. 환자 1인당 주당 산정 횟수 한도는?</div>
+        <div class="faq-a">환자 1인당 주 3회까지 산정 가능. (말기 암환자 등 집중 진료 필요시 예외 사유 기재 후 초과 가능)</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Q. 자정(24시)을 넘겨 진료가 종료된 경우는?</div>
+        <div class="faq-a">방문진료는 방문당 수가이므로, 진료 시작 시간이 포함된 일자를 기준으로 1회만 산정</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Q. 요양원 등 시설 입소자 청구 가능한가요?</div>
+        <div class="faq-a">불가. 촉탁의/협약의료기관 의사가 진료하는 시설 입소자는 대상에서 제외</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Q. 소견서, 방문간호지시서 발급 목적 방문은?</div>
+        <div class="faq-a">불가. 각종 증명서 발급 목적의 방문은 비급여 대상이므로 방문진료 시범수가 산정 불가</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="save-toast" id="saveToast">저장되었습니다</div>
+
+<script>
+const defaultPrograms = [
+{title:"가정간호 시범사업", 공단번호:"", 접수구분:"가정간호 가정간호(시설)", 진단명:"", 진찰료산정:"불가",
+ 청구기한:"", MT002:"암, 치매 등 환자가 타질환으로 진료\n- V008 암\n- V194 희귀질환\n- V231 난치질환\n- V293 중증화상\n- V251 결핵/잠복결핵\n- 치매 V810-V811(사전승인번호 필요)\n- 치매 V800-V801(사전승인번호 불필요)",
+ 항목구분:"1항3목", 특이사항:"", 본인부담율:"일반가정 20%\n산정특례 10%\n암 5%\n급여1종 무료\n급여2종 10%\n차상위1종 무료\n차상위2종 14%",
+ 처방횟수:"1일 7회 방문가능", 동시산정:"", 바우처:""},
+
+{title:"11.29~방문진료 시범사업", 공단번호:"337391795", 접수구분:"방문진료", 진단명:"", 진찰료산정:"불가",
+ 청구기한:"2개월 이내",
+ MT002:"일차의료 방문진료 수가 시범사업 대상자\n- S017 요양비(산소치료, 인공호흡기) 급여 대상자\n- S048 장기요양 1·2등급 와상환자\n- S049 연간 외래 진료 횟수가 365회를 초과하는 경우\nMT002 'F029'를 우선 기재, 줄을 달리하여 S017/S048/S049 기재(금액은 시범사업 본인부담율 적용)\n산정특례 V코드, MT014 모두 삭제",
+ 항목구분:"1항3목",
+ 특이사항:"방문진료료Ⅰ - 타 수가 산정 불가(원외처방 같이청구)\n방문진료료Ⅱ - 타 수가 산정 가능\n방문간호료와 방문료 동시산정가능\n방문시 다른 진료내역 청구시 분리 X",
+ 본인부담율:"건보: 30%\n건보이면서 장기요양 1·2등급, 와상환자 및 요양비(산소치료,인공호흡기) 급여 대상자: 15%\n차상위1·2종, 급여1·2종: 5%\n※ 방문진료수가에 특례 적용 불가능\n방문진료료 2인 경우도 방문료 제외한 수가들 특례 적용 불가능\n방문진료2에서 급여 차상위 1000원/1500원 부담금 사라짐",
+ 처방횟수:"1인당 한달에 60회\n장기요양 재택의료센터시범사업 선정기관은 100회까지",
+ 동시산정:"", 바우처:""},
+
+{title:"방문진료 시범사업", 공단번호:"337391795", 접수구분:"방문진료", 진단명:"", 진찰료산정:"불가",
+ 청구기한:"2개월 이내", MT002:"S017",
+ 항목구분:"1항3목",
+ 특이사항:"방문진료료Ⅰ - 타 수가 산정 불가(원외처방 같이청구)\n방문진료료Ⅱ - 타 수가 산정 가능\n방문간호료와 방문료 동시산정가능\n방문시 다른 진료내역 청구시 분리 X",
+ 본인부담율:"방문진료료 수가들은 건보 30%\n차상위1종·급여1종: 5%\n차상위2종·급여2종: 10% (fix)\n방문진료료 2인 경우 방문료 제외한 수가들 특례적용 가능",
+ 처방횟수:"1인당 한달에 60회\n장기요양 재택의료센터시범사업 선정기관은 100회까지",
+ 동시산정:"", 바우처:""},
+
+{title:"만성질환관리제", 공단번호:"", 접수구분:"내원구분 - 재진(만성질환)", 진단명:"", 진찰료산정:"가능",
+ 청구기한:"", MT002:"없음", 항목구분:"", 특이사항:"",
+ 본인부담율:"외래재진진찰료 30 → 20%", 처방횟수:"", 동시산정:"", 바우처:""},
+
+{title:"일차만성질환 사업본사업", 공단번호:"24.9.28~", 접수구분:"만성질환 사업 만성질환 시범사업", 진단명:"고혈압, 당뇨", 진찰료산정:"가능",
+ 청구기한:"", MT002:"F030, S012(환자관리료)", 항목구분:"1항3목, 바우처-9항1or2목", 특이사항:"",
+ 본인부담율:"건강보험 대상자: 20%\n차상위·급여환자 본인부담률 적용\n특례 환자는 특례비율 적용\n65세 이상 환자는 30% 본인부담률인 경우 적용\n환자관리료 20%(특례 등으로 본인부담 낮아지면 낮은 부담률 적용)",
+ 처방횟수:"1주기 포괄평가 - 연1회 (AX001)\n2주기 계획수립료 - 연1회 (AX002)\nAX003 점검및평가 - 연2회\nAX004,AX005 (내원)교육상담료1(의사)·2(케어코디) - 주기당 연간 10회 이내 동시청구 가능\n(전화)환자관리료 - 월1회, 연간12회",
+ 동시산정:"", 바우처:""},
+
+{title:"일차만성질환 시범사업", 공단번호:"", 접수구분:"만성질환 시범사업 만성질환 바우처 시범사업", 진단명:"고혈압, 당뇨", 진찰료산정:"불가",
+ 청구기한:"2개월 이내", MT002:"S012, 바우처-S013", 항목구분:"1항3목, 바우처-9항1or2목", 특이사항:"",
+ 본인부담율:"검진바우처 100% 공단부담\n건강보험대상자: 10%\n차상위대상자·급여: 면제\n'환자관리료'는 요양급여비용 전액을 국민건강보험공단이 부담",
+ 처방횟수:"1주기 포괄평가 - 연1회\n2주기 계획수립료 - 연1회\n점검및평가 - 연2회\n(내원)교육상담료 - '질병관리 및 생활습관개선'과 '생활습관개선' 합산 연간 10회 이내\n(전화)환자관리료 - 월1회, 연간12회",
+ 동시산정:"", 바우처:""},
+
+{title:"장애인주치의 시범사업", 공단번호:"337391660", 접수구분:"장애인건강주치의(시범사업), 맞춤형검진바우처(시범사업)", 진단명:"",
+ 진찰료산정:"불가 (포괄평가 및 계획수립을 위해 내원한 중증 장애인에게는 별도 진찰료 산정가능)",
+ 청구기한:"2개월 이내", MT002:"S010, 바우처-S036", 항목구분:"1항3목, 바우처-9항1or2목",
+ 특이사항:"방문진료료Ⅰ - 타 수가 산정 불가(원외처방전 분리청구)\n방문진료료Ⅱ - 타 수가 산정 가능\n방문간호료와 방문료 동시산정가능\n방문시 다른 진료내역 청구시 분리 O, 분리내역 본인부담금 30%",
+ 본인부담율:"검진바우처 100% 공단부담\n건강보험대상자: 10%\n차상위대상자·급여: 면제\n'환자관리료'는 요양급여비용 전액을 국민건강보험공단이 부담\n장애인주치의시범사업 접수구분 특례적용 무조건 안됨",
+ 처방횟수:"포괄평가 - 연1회\n중간평가 - 연1회\n(내원)교육상담료 - 연8회\n(전화)환자관리료 - 월1회, 연간12회\n(방문) 중증 - 방문진료료·방문간호료 포함 연24회, 월4회 / 경증 - 4회",
+ 동시산정:"방문진료료-교육상담료-환자관리료는 동시불가", 바우처:""},
+
+{title:"노인장기요양", 공단번호:"", 접수구분:"", 진단명:"", 진찰료산정:"", 청구기한:"", MT002:"", 항목구분:"", 특이사항:"",
+ 본인부담율:"일반 20%, 급여 10%, 기초생활 0원\n65세 미만인 자가 신청 시, 65세 이상인 자가 공단이 의사소견 발급전 우선 발급할 때 전액본인부담",
+ 처방횟수:"", 동시산정:"", 바우처:""},
+
+{title:"치매시범사업", 공단번호:"337391697", 접수구분:"치매관리 주치의 시범사업", 진단명:"치매상병 F00,F01,F02,F03,G30,G31.00~G31.04,G31.82",
+ 진찰료산정:"불가", 청구기한:"2개월 이내",
+ MT002:"S045\n치매 V810-V811(사전승인번호 필요)\n치매 V800-V801(사전승인번호 불필요)", 항목구분:"",
+ 특이사항:"방문진료료Ⅰ - 타 수가 산정 불가(원외처방전 분리청구)\n방문진료료Ⅱ - 타 수가 산정 가능\n방문시 다른 진료내역 청구시 분리 O, 분리내역 본인부담금 30%",
+ 본인부담율:"(건강보험) 시범사업 수가에 대하여 본인부담률 20% 적용\n광역치매센터 운영 병원·종합병원·상급종합병원 포함\n치매특례 가진 환자들은 적용가능\n차상위(1종 면제, 2종 의원 1500원 직접조제/1000원 그 외)\n(의료급여1종) 법정본인부담률(1차기관 1500원 직접조제/1000원 그 외, 2차 +500원, 3차 +1000원)\n(의료급여2종) 법정본인부담률(1차기관 1500원 직접조제/1000원 그 외, 2·3차기관 15% 적용)",
+ 처방횟수:"포괄평가 - 연1회\n중간평가 - 연1회\n(내원)교육상담료 - 연8회\n(전화)환자관리료 - 월1회, 연간12회\n(방문) 중증 - 방문진료료·방문간호료 포함 연24회, 월4회",
+ 동시산정:"방문진료료-교육상담료-환자관리료는 동시불가", 바우처:""},
+
+{title:"동네의원 마음건강돌봄 연계 시범사업", 공단번호:"", 접수구분:"동네의원 마음건강돌봄 연계 시범사업", 진단명:"", 진찰료산정:"불가",
+ 청구기한:"2개월 이내에 청구", MT002:"S039", 항목구분:"1항3목", 특이사항:"",
+ 본인부담율:"전액청구", 처방횟수:"전부 1회만 처방", 동시산정:"", 바우처:""},
+
+{title:"금연시범사업", 공단번호:"", 접수구분:"따로 접수구분 없음 (공단연계 - 금연치료 이용)", 진단명:"",
+ 진찰료산정:"미산정(진찰료 본인부담금 비급여 수가 만들어야 함)", 청구기한:"", MT002:"", 항목구분:"", 특이사항:"",
+ 본인부담율:"저소득 20%, 급여환자(본인부담없음) 무료 → 저소득층 여부는 공단에 환자입력시 확인 가능\n일반환자 - 금연단독진료 초진 4,500원 / 재진 2,700원, 3회차부터 공단 전액지원\n금연 동시진료(타진료 진찰료 추가산정가능) 초진 3,000원 / 재진 1,800원, 3회차부터 공단 전액지원",
+ 처방횟수:"6회 진료 or 84일 처방", 동시산정:"", 바우처:""},
+
+];
+
+const fieldLabels = [
+  ["공단번호","공단번호"], ["접수구분","접수구분"], ["진단명","진단명"], ["진찰료산정","진찰료 산정"],
+  ["청구기한","청구기한"], ["MT002","MT002 코드"], ["항목구분","항목구분"], ["특이사항","특이사항"],
+  ["본인부담율","본인부담율"], ["처방횟수","처방(산정)횟수"], ["동시산정","동시산정"], ["바우처","바우처"]
+];
+const STORAGE_KEY = 'pilotProgramsData';
+
+let programs = loadPrograms();
+let editingIdx = null;   // 현재 수정 중인 카드 인덱스 (기존 항목 수정)
+let addingNew = false;   // 새 항목 추가 폼 표시 여부
+let expanded = new Set(); // 펼쳐진 카드의 인덱스 (재렌더링에도 유지)
+let scrollTargetIdx = null; // 렌더링 후 스크롤/강조할 카드 인덱스
+
+function loadPrograms(){
+  try{
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if(saved) return JSON.parse(saved);
+  }catch(e){}
+  return JSON.parse(JSON.stringify(defaultPrograms));
+}
+
+function savePrograms(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(programs));
+    showToast('저장되었습니다');
+  }catch(e){
+    showToast('저장에 실패했습니다');
+  }
+}
+
+function showToast(msg){
+  const t = document.getElementById('saveToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+const listEl = document.getElementById('progList');
+const countEl = document.getElementById('countBadge');
+const searchInput = document.getElementById('searchInput');
+
+function escapeHtml(str){
+  return (str||'').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function blankProgram(){
+  const p = {title:''};
+  fieldLabels.forEach(([key]) => p[key] = '');
+  return p;
+}
+
+function emptyFormHtml(prefix){
+  return `
+    <div class="edit-row">
+      <label>시범사업명</label>
+      <input type="text" id="${prefix}-title" placeholder="시범사업명">
+    </div>
+    ${fieldLabels.map(([key,label]) => `
+      <div class="edit-row">
+        <label>${label}</label>
+        <textarea id="${prefix}-${key}" rows="2" placeholder="${label}"></textarea>
+      </div>
+    `).join('')}
+  `;
+}
+
+function fillForm(prefix, p){
+  document.getElementById(`${prefix}-title`).value = p.title || '';
+  fieldLabels.forEach(([key]) => {
+    const el = document.getElementById(`${prefix}-${key}`);
+    if(el) el.value = p[key] || '';
+  });
+}
+
+function readForm(prefix){
+  const p = {title: document.getElementById(`${prefix}-title`).value.trim()};
+  fieldLabels.forEach(([key]) => {
+    p[key] = document.getElementById(`${prefix}-${key}`).value;
+  });
+  return p;
+}
+
+function render(){
+  const q = searchInput.value.trim().toLowerCase();
+  const list = q
+    ? programs.map((p,i)=>({p,i})).filter(({p}) => Object.values(p).some(v => (v||'').toString().toLowerCase().includes(q)))
+    : programs.map((p,i)=>({p,i}));
+
+  countEl.textContent = q ? `${list.length}건` : `총 ${programs.length}건`;
+
+  const addFormHtml = addingNew ? `
+    <div class="prog-card open">
+      <div class="prog-head" style="cursor:default;">
+        <div class="prog-title">새 시범사업 추가</div>
+      </div>
+      <div class="edit-grid">
+        ${emptyFormHtml('new')}
+        <div class="edit-actions">
+          <button class="btn btn-sm btn-cancel" onclick="cancelAdd()">취소</button>
+          <button class="btn btn-sm btn-save" onclick="confirmAdd()">추가</button>
+        </div>
+      </div>
+    </div>
+  ` : '';
+
+  if(list.length === 0 && !addingNew){
+    listEl.innerHTML = addFormHtml + '<div class="empty-state">검색 결과가 없습니다</div>';
+    return;
+  }
+
+  const cardsHtml = list.map(({p, i}) => {
+    if(i === editingIdx){
+      return `
+        <div class="prog-card open" data-idx="${i}">
+          <div class="prog-head" style="cursor:default;">
+            <div class="prog-title">수정 중 · ${escapeHtml(p.title)}</div>
+          </div>
+          <div class="edit-grid">
+            ${emptyFormHtml('edit')}
+            <div class="edit-actions">
+              <button class="btn btn-sm btn-cancel" onclick="cancelEdit()">취소</button>
+              <button class="btn btn-sm btn-save" onclick="confirmEdit(${i})">저장</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    const fields = fieldLabels.map(([key,label]) => {
+      const val = (p[key] || '').trim();
+      if(!val) return `<div class="field"><div class="k">${label}</div><div class="v empty">-</div></div>`;
+      return `<div class="field"><div class="k">${label}</div><div class="v">${escapeHtml(val)}</div></div>`;
+    }).join('');
+    const burden = (p.본인부담율||'').split('\n')[0] || '';
+    const isOpen = expanded.has(i);
+    const isJustSaved = i === scrollTargetIdx;
+    return `
+      <div class="prog-card${isOpen ? ' open' : ''}${isJustSaved ? ' just-saved' : ''}" data-idx="${i}">
+        <div class="prog-head" onclick="toggleCard(${i})">
+          <div>
+            <div class="prog-title">${escapeHtml(p.title)}</div>
+            <div class="prog-sub">${p.접수구분 ? escapeHtml(p.접수구분) : ''}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            ${burden ? `<span class="tag-burden">${escapeHtml(burden)}</span>` : ''}
+            ${isJustSaved ? `<span class="saved-badge">저장됨 ✓</span>` : ''}
+            <span class="chev">▶</span>
+          </div>
+        </div>
+        <div class="prog-body">
+          ${fields}
+          <div class="card-actions">
+            <button class="btn btn-sm btn-edit" onclick="startEdit(event, ${i})">✎ 수정</button>
+            <button class="btn btn-sm btn-del" onclick="deleteProgram(event, ${i})">삭제</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  listEl.innerHTML = addFormHtml + cardsHtml;
+
+  if(addingNew){
+    fillForm('new', blankProgram());
+  }
+  if(editingIdx !== null && programs[editingIdx]){
+    fillForm('edit', programs[editingIdx]);
+  }
+
+  if(scrollTargetIdx !== null){
+    const targetEl = listEl.querySelector(`.prog-card[data-idx="${scrollTargetIdx}"]`);
+    if(targetEl){
+      targetEl.scrollIntoView({behavior:'smooth', block:'center'});
+    }
+    const idxToClear = scrollTargetIdx;
+    scrollTargetIdx = null;
+    setTimeout(() => {
+      const el = listEl.querySelector(`.prog-card[data-idx="${idxToClear}"]`);
+      if(el) el.classList.remove('just-saved');
+      const badge = el ? el.querySelector('.saved-badge') : null;
+      if(badge) badge.remove();
+    }, 2200);
+  }
+}
+
+function toggleCard(i){
+  if(expanded.has(i)) expanded.delete(i);
+  else expanded.add(i);
+  render();
+}
+
+function startEdit(ev, i){
+  ev.stopPropagation();
+  addingNew = false;
+  editingIdx = i;
+  render();
+}
+
+function cancelEdit(){
+  editingIdx = null;
+  render();
+}
+
+function confirmEdit(i){
+  const updated = readForm('edit');
+  if(!updated.title){
+    showToast('시범사업명을 입력해 주세요');
+    return;
+  }
+  programs[i] = updated;
+  editingIdx = null;
+  expanded.add(i);          // 저장 후에도 펼친 상태 유지
+  scrollTargetIdx = i;      // 저장된 카드로 스크롤 + 강조
+  savePrograms();
+  render();
+}
+
+function deleteProgram(ev, i){
+  ev.stopPropagation();
+  if(!confirm(`'${programs[i].title}' 항목을 삭제할까요?`)) return;
+  programs.splice(i, 1);
+  if(editingIdx === i) editingIdx = null;
+  // 삭제로 인해 뒤 인덱스들이 하나씩 당겨지므로 expanded 재계산
+  const newExpanded = new Set();
+  expanded.forEach(idx => {
+    if(idx < i) newExpanded.add(idx);
+    else if(idx > i) newExpanded.add(idx - 1);
+  });
+  expanded = newExpanded;
+  savePrograms();
+  render();
+}
+
+function cancelAdd(){
+  addingNew = false;
+  render();
+}
+
+function confirmAdd(){
+  const p = readForm('new');
+  if(!p.title){
+    showToast('시범사업명을 입력해 주세요');
+    return;
+  }
+  programs.push(p);
+  addingNew = false;
+  const newIdx = programs.length - 1;
+  expanded.add(newIdx);     // 추가한 카드는 펼친 채로 표시
+  scrollTargetIdx = newIdx; // 새로 추가된 카드로 스크롤 + 강조
+  savePrograms();
+  render();
+}
+
+document.getElementById('addBtn').addEventListener('click', () => {
+  editingIdx = null;
+  addingNew = true;
+  render();
+  listEl.scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if(!confirm('편집한 모든 내용을 지우고 기본 데이터로 되돌릴까요?')) return;
+  programs = JSON.parse(JSON.stringify(defaultPrograms));
+  editingIdx = null;
+  addingNew = false;
+  expanded = new Set();
+  scrollTargetIdx = null;
+  localStorage.removeItem(STORAGE_KEY);
+  render();
+  showToast('기본값으로 초기화되었습니다');
+});
+
+searchInput.addEventListener('input', render);
+
+render();
+
+// 탭 전환
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>본인부담율 통합 관리</title>
+<style>
+  :root{
+    --navy:#0f2a4a;
+    --navy-2:#16385f;
+    --red:#c23b3b;
+    --red-bg:#fbeaea;
+    --teal:#0f6e56;
+    --teal-bg:#e1f5ee;
+    --bg:#f4f6f9;
+    --card:#ffffff;
+    --border:#e1e5eb;
+    --text:#1c2733;
+    --text-sub:#5b6b7c;
+    --text-mute:#8b98a6;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:28px 20px 60px;}
+  header{
+    background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);
+    border-radius:14px;
+    padding:26px 28px;
+    color:#fff;
+    margin-bottom:16px;
+    position:relative;
+    overflow:hidden;
+  }
+  header::after{
+    content:"";
+    position:absolute;
+    right:-40px;top:-40px;
+    width:160px;height:160px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.06);
+  }
+  header .eyebrow{
+    font-size:12px;letter-spacing:.06em;text-transform:uppercase;
+    color:#9db4cf;margin:0 0 6px;font-weight:600;
+  }
+  header h1{margin:0 0 6px;font-size:22px;font-weight:700;}
+  header p{margin:0;color:#c7d5e6;font-size:13.5px;line-height:1.6;}
+
+  .main-tabs{display:flex;gap:8px;margin-bottom:18px;background:var(--card);padding:5px;border-radius:12px;border:1px solid var(--border);}
+  .main-tab{
+    flex:1;text-align:center;padding:10px 10px;border-radius:8px;
+    font-size:14px;font-weight:700;color:var(--text-sub);cursor:pointer;border:none;background:transparent;
+  }
+  .main-tab.active{background:var(--navy);color:#fff;}
+
+  .toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+  .search-box{flex:1;min-width:220px;position:relative;}
+  .search-box input{
+    width:100%;padding:11px 14px 11px 38px;border-radius:10px;border:1px solid var(--border);
+    font-size:14px;background:var(--card);color:var(--text);
+  }
+  .search-box input:focus{outline:2px solid var(--teal);outline-offset:-1px;}
+  .search-box svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-mute);}
+  .btn{
+    padding:11px 16px;border-radius:10px;border:1px solid var(--border);background:var(--card);
+    color:var(--text);font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;
+  }
+  .btn:hover{background:#eef1f5;}
+  .btn-primary{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .btn-primary:hover{background:var(--navy-2);}
+
+  .sub-chips{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  .chip{
+    padding:7px 13px;border-radius:20px;border:1px solid var(--border);background:var(--card);
+    font-size:12.5px;font-weight:600;cursor:pointer;color:var(--text-sub);
+  }
+  .chip.active{background:var(--teal-bg);border-color:var(--teal);color:var(--teal);}
+
+  .group-title{
+    font-size:13px;font-weight:700;color:var(--navy);margin:24px 0 10px;padding-left:2px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .group-title .line{flex:1;height:1px;background:var(--border);}
+
+  .card-list{display:flex;flex-direction:column;gap:8px;}
+  .item-card{
+    background:var(--card);border:1px solid var(--border);border-left:4px solid var(--teal);
+    border-radius:var(--radius);padding:14px 16px;display:flex;justify-content:space-between;
+    gap:14px;align-items:flex-start;
+  }
+  .item-card.tier-note{border-left-color:var(--red);}
+  .item-main{flex:1;min-width:0;}
+  .item-main .cat{font-size:14.5px;font-weight:700;color:var(--text);margin:0 0 4px;}
+  .item-main .cond{font-size:12.5px;color:var(--text-mute);margin:0 0 8px;}
+  .rate-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .rate-pill{font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:7px;background:var(--teal-bg);color:var(--teal);}
+  .rate-pill.meal{background:#eef2f6;color:var(--text-sub);}
+  .rate-pill.legal{background:var(--red-bg);color:var(--red);}
+  .item-note{font-size:12px;color:var(--text-mute);margin-top:7px;line-height:1.5;}
+  .item-actions{display:flex;gap:6px;flex-shrink:0;}
+  .icon-btn{
+    width:30px;height:30px;border-radius:7px;border:1px solid var(--border);background:#fff;
+    color:var(--text-sub);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .icon-btn:hover{background:#f2f4f7;}
+  .icon-btn.danger:hover{background:var(--red-bg);color:var(--red);border-color:var(--red);}
+  .table-actions{display:flex;gap:4px;white-space:nowrap;}
+  .table-actions .icon-btn{width:24px;height:24px;}
+
+  .empty{text-align:center;padding:50px 20px;color:var(--text-mute);font-size:13.5px;}
+
+  .rate-table-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px;}
+  .rate-table-title{padding:12px 16px 0;font-size:13.5px;font-weight:700;color:var(--navy);}
+  table.rate-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}
+  table.rate-table th{
+    background:#f6f8fa;color:var(--text-sub);font-weight:700;text-align:left;
+    padding:9px 16px;border-bottom:1px solid var(--border);font-size:12px;
+  }
+  table.rate-table td{padding:9px 16px;border-bottom:1px solid var(--border);color:var(--text);}
+  table.rate-table tr:last-child td{border-bottom:none;}
+  .foot-note{padding:10px 16px 14px;font-size:11.5px;color:var(--text-mute);}
+
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(15,42,74,0.45);align-items:center;justify-content:center;z-index:50;padding:20px;}
+  .modal-bg.open{display:flex;}
+  .modal{background:#fff;border-radius:14px;width:100%;max-width:460px;padding:24px;max-height:88vh;overflow-y:auto;}
+  .modal h2{margin:0 0 4px;font-size:17px;color:var(--navy);}
+  .modal .sub{font-size:12.5px;color:var(--text-mute);margin:0 0 18px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--text-sub);margin-bottom:6px;}
+  .field input,.field select,.field textarea{
+    width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;
+    font-size:13.5px;font-family:inherit;color:var(--text);
+  }
+  .field textarea{resize:vertical;min-height:56px;}
+  .field .err{color:var(--red);font-size:12px;margin-top:5px;display:none;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;}
+  .toast{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;
+    padding:10px 18px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;
+    transition:opacity .25s;z-index:60;
+  }
+  .toast.show{opacity:1;}
+  footer{margin-top:28px;font-size:11.5px;color:var(--text-mute);text-align:center;line-height:1.7;}
+
+  /* ---- Mode switch (법정 기준 / 씨차트 실무) ---- */
+  .mode-switch{display:flex;gap:8px;margin-bottom:16px;}
+  .mode-btn{
+    flex:1;text-align:center;padding:12px 14px;border-radius:10px;
+    font-size:13.5px;font-weight:700;color:var(--text-sub);cursor:pointer;
+    border:1px solid var(--border);background:var(--card);
+  }
+  .mode-btn:hover{background:#eef1f5;}
+  .mode-btn.active{background:var(--teal);border-color:var(--teal);color:#fff;}
+
+  /* ---- extra button modifiers (shared) ---- */
+  .btn-danger{color:var(--red);}
+  .btn-danger:hover{background:var(--red-bg);border-color:var(--red);}
+  .btn-ghost{border-color:transparent;background:transparent;color:var(--text-sub);}
+  .btn-small{padding:5px 9px;font-size:11px;border-radius:6px;}
+
+  /* ---- Practical (씨차트 실무참고표) ---- */
+  .pt-tabstrip{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+  .pt-tab{
+    padding:8px 13px;border-radius:20px;border:1px solid var(--border);background:var(--card);
+    font-size:12.5px;font-weight:700;cursor:pointer;color:var(--text-sub);white-space:nowrap;
+  }
+  .pt-tab .cnt{font-size:10.5px;font-weight:600;opacity:.7;margin-left:4px;}
+  .pt-tab.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .pt-toolrow{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .pt-global{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-sub);white-space:nowrap;}
+  .pt-global input{accent-color:var(--teal);}
+  .pt-panel{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px;}
+  .pt-panel-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .pt-panel-title{display:flex;align-items:baseline;gap:8px;}
+  .pt-panel-title h2{font-size:15px;margin:0;color:var(--navy);font-weight:700;}
+  .pt-panel-title .sub{font-size:11.5px;color:var(--text-mute);}
+  .pt-actions{display:flex;gap:6px;flex-wrap:wrap;}
+  .pt-search{position:relative;flex:1;min-width:200px;max-width:340px;}
+  .pt-search input{width:100%;padding:8px 11px 8px 32px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;background:#fbfcfc;color:var(--text);}
+  .pt-search input:focus{outline:none;border-color:var(--teal);background:#fff;}
+  .pt-search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-mute);}
+  .pt-table-scroll{overflow-x:auto;}
+  .pt-scroll-hint{font-size:11px;color:var(--text-mute);padding:6px 16px 0;display:none;}
+  .pt-scroll-hint.show{display:block;}
+  table.pt-table{width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed;}
+  table.pt-table thead th{position:sticky;top:0;background:var(--teal-bg);color:var(--teal);text-align:left;font-weight:700;font-size:11px;padding:9px 10px;border-bottom:1px solid var(--border);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  table.pt-table thead th.col-actions{text-align:right;}
+  table.pt-table tbody td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;white-space:pre-line;word-break:keep-all;overflow-wrap:break-word;color:var(--text);line-height:1.5;}
+  table.pt-table tbody tr:nth-child(even){background:#fafbfc;}
+  table.pt-table tbody tr:hover{background:#f6f8fa;}
+  table.pt-table tbody tr.editing{background:#fdf3e0;}
+  table.pt-table tbody tr.new-row{background:var(--teal-bg);}
+  table.pt-table td.col-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px;padding-left:4px;}
+  table.pt-table td.col-actions .btn{padding:5px 7px;}
+  table.pt-table td.rowlabel{font-weight:700;color:var(--navy);}
+  table.pt-table td.col-note{font-size:12.5px;}
+  table.pt-table td.col-note .pt-cell-edit{min-height:56px;}
+  table.pt-table mark{background:#ffe8a3;color:inherit;border-radius:2px;padding:0 1px;}
+  .pt-cell-edit{width:100%;min-width:110px;min-height:32px;resize:vertical;padding:6px 8px;border:1px solid var(--teal);border-radius:6px;font-family:inherit;font-size:12px;background:#fff;}
+  .pt-cell-edit:focus{outline:none;box-shadow:0 0 0 2px var(--teal-bg);}
+  .pt-sheet-tag{display:inline-block;font-size:10.5px;font-weight:700;color:var(--navy);background:var(--teal-bg);border-radius:4px;padding:2px 7px;letter-spacing:.02em;}
+  .pt-empty{padding:44px 20px;text-align:center;color:var(--text-mute);font-size:13px;}
+  .pt-foot{padding:10px 16px 14px;font-size:11.5px;color:var(--text-mute);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">SeeChart · 심사청구파트</p>
+    <h1 id="pageTitle">의원급 본인부담율 조회</h1>
+    <p id="pageDesc">건강보험 진료 시 의원급 기준 본인부담률을 검색하고, 고시 개정에 따라 직접 수정·추가할 수 있습니다.</p>
+  </header>
+
+  <div class="mode-switch">
+    <button class="mode-btn active" data-mode="legal">법정 기준 (시행령 별표2)</button>
+    <button class="mode-btn" data-mode="practical">씨차트 실무 참고표 (엑셀 원본)</button>
+  </div>
+
+  <div id="legalMode">
+  <div class="main-tabs">
+    <button class="main-tab" data-tab="inpatient">입원진료시</button>
+    <button class="main-tab" data-tab="outpatient">외래진료시</button>
+    <button class="main-tab" data-tab="special">차상위 본인부담경감대상자</button>
+    <button class="main-tab" data-tab="medicaid">의료급여</button>
+    <button class="main-tab" data-tab="coderef">특정기호</button>
+    <button class="main-tab" data-tab="sanjeong">산정특례 등록번호</button>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="searchInput" type="text" placeholder="예: 자연분만, 난임진료, 한방 추나요법...">
+    </div>
+    <button class="btn btn-primary" id="addBtn">+ 항목 추가</button>
+  </div>
+
+  <div id="ageChipsWrap" class="sub-chips" style="display:none;"></div>
+  <div id="specialChipsWrap" class="sub-chips" style="display:none;"></div>
+  <div id="careChipsWrap" class="sub-chips" style="display:none;"></div>
+  <div class="sub-chips" id="filterChips"></div>
+
+  <div id="tablesRoot"></div>
+  <div id="listRoot"></div>
+
+  <footer>
+    근거: 보건복지부 고시 및 국민건강보험법 시행령 별표2 기준<br>
+    본 페이지의 데이터는 팀 공용으로 저장되며, 함께 사용하는 팀원 모두에게 반영됩니다. 구간표(요양급여비용총액 구간별 부담액)는 참고용 표이며, 특정 항목 목록은 직접 추가·수정할 수 있습니다.
+  </footer>
+  </div><!-- /legalMode -->
+
+  <div id="practicalMode" style="display:none;">
+    <div class="pt-tabstrip" id="ptTabStrip"></div>
+    <div class="pt-toolrow">
+      <label class="pt-global">
+        <input type="checkbox" id="ptGlobalToggle">
+        전체 표 검색
+      </label>
+    </div>
+    <div class="pt-panel">
+      <div class="pt-panel-head">
+        <div class="pt-panel-title">
+          <h2 id="ptPanelTitle">-</h2>
+          <span class="sub" id="ptPanelSub"></span>
+        </div>
+        <div class="pt-search">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="ptSearchBox" placeholder="이 표 전체 내용에서 검색 (구분, 유형, 특정기호, 비고 등)">
+        </div>
+        <div class="pt-actions">
+          <button class="btn" id="ptBtnReset">초기값 복원</button>
+          <button class="btn" id="ptBtnExport">백업 내보내기</button>
+          <button class="btn" id="ptBtnImportTrigger">불러오기</button>
+          <input type="file" id="ptImportFile" accept="application/json" style="display:none;">
+          <button class="btn btn-primary" id="ptBtnAdd">+ 행 추가</button>
+        </div>
+      </div>
+      <div class="pt-table-scroll" id="ptTableScroll">
+        <table class="pt-table" id="ptDataTable">
+          <colgroup id="ptColGroup"></colgroup>
+          <thead><tr id="ptHeadRow"></tr></thead>
+          <tbody id="ptBodyRows"></tbody>
+        </table>
+      </div>
+      <div class="pt-scroll-hint" id="ptScrollHint">← 표가 화면보다 넓습니다. 좌우로 스크롤하면 나머지 열을 볼 수 있습니다.</div>
+      <div class="pt-empty" id="ptEmptyState" style="display:none;">검색 결과가 없습니다.</div>
+    </div>
+    <div class="pt-foot">원본: 본인부담정리.xlsx (건강보험·차상위·의료급여 외래/입원, 희귀난치, 접수구분 8개 시트) — 씨차트 시스템에서 사용하는 보조유형·특정기호·MT코드 기준의 실무 참고표입니다. 수정 내용은 팀 공용으로 저장되며 팀원 모두에게 즉시 반영됩니다.</div>
+  </div><!-- /practicalMode -->
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2 id="modalTitle">항목 추가</h2>
+    <p class="sub">본인부담율 관련 항목을 입력하세요.</p>
+    <div class="field" id="field_cat">
+      <label id="label_cat">구분(항목명) *</label>
+      <input id="f_cat" type="text" placeholder="예: 격리입원료">
+      <div class="err" id="err_cat">항목명을 입력해 주세요.</div>
+    </div>
+    <div class="field" id="field_code">
+      <label id="label_code">코드(해당 시)</label>
+      <input id="f_code" type="text" placeholder="예: M003, B001 — 의료급여 코드표 항목일 때만 입력">
+    </div>
+    <div class="field" id="field_cond">
+      <label id="label_cond">적용 조건 / 대상</label>
+      <input id="f_cond" type="text" placeholder="예: 일반환자 해당 항목">
+    </div>
+    <div class="field" id="field_group">
+      <label>그룹</label>
+      <select id="f_group"></select>
+    </div>
+    <div class="field" id="field_rate">
+      <label id="label_rate">본인부담률 / 부담액 *</label>
+      <input id="f_rate" type="text" placeholder="예: 해당 비용의 10%">
+      <div class="err" id="err_rate">본인부담률을 입력해 주세요.</div>
+    </div>
+    <div class="field" id="field_meal">
+      <label>식대 본인부담(입원 항목 해당 시)</label>
+      <input id="f_meal" type="text" placeholder="예: 식대총액의 50%">
+    </div>
+    <div class="field" id="field_note">
+      <label id="label_note">근거 / 비고</label>
+      <textarea id="f_note" placeholder="예: 시행령 별표2 1호 가목 1)"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="cancelBtn">취소</button>
+      <button class="btn btn-primary" id="saveBtn">저장</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'copay-items-v9';
+
+const GROUP_DEFS = {
+  inpatient: ['기본 본인부담률','일반환자 특정 항목','공통 적용 항목'],
+  outpatient: ['외래 특정 항목(65세 이상)','외래 특정 항목(65세 미만)','외래 일반 항목'],
+  special: ['차상위1종 특정 항목','차상위2종 특정 항목(입원)','차상위2종 특정 항목(외래)'],
+  medicaid: ['의료급여 특정 항목(입원)','의료급여 특정기호(입원)','의료급여 외래 부담면제·선택기관 코드(외래)','의료급여 외래 특정 항목(외래)'],
+  coderef: ['특정기호 전체'],
+  sanjeong: ['산정특례 등록번호 전체']
+};
+const TAB_LABEL = {inpatient:'입원진료시', outpatient:'외래진료시', special:'차상위 본인부담경감대상자', medicaid:'의료급여', coderef:'특정기호', sanjeong:'산정특례 등록번호'};
+const TAB_DESC = {
+  inpatient:'건강보험 입원진료 시 의원급 기준 본인부담률을 검색하고, 고시 개정에 따라 직접 수정·추가할 수 있습니다.',
+  outpatient:'건강보험 외래진료 시 의원급 기준 본인부담률(연령·기관별 구간표 + 특정 항목)을 검색하고, 직접 수정·추가할 수 있습니다.',
+  special:'차상위1종(공상등구분:C) 대상자의 의원급 입원·외래 본인부담률입니다. 기본은 0원이며, 특정 항목만 별도 본인부담금이 발생합니다.',
+  medicaid:'의료급여 1종·2종 수급권자의 입원 본인부담률(식대 제외)과 특정 항목·특정기호별 본인부담률입니다.',
+  coderef:'청구 시 사용하는 특정기호 전체 목록입니다. 코드나 키워드로 검색해 내용을 확인하고, 필요 시 직접 추가·수정할 수 있습니다.',
+  sanjeong:'산정특례 등록 코드별 구분과 등록번호(산정특례 코드) 목록입니다. 코드나 키워드로 검색하고, 직접 추가·수정할 수 있습니다.'
+};
+
+const DEFAULT_DATA = [
+  {id:'d1', type:'inpatient', group:'기본 본인부담률', cat:'일반환자', cond:'', rate:'요양급여비용총액의 20%', meal:'식대총액(기본식대+가산식대)의 50%', note:''},
+  {id:'d2', type:'inpatient', group:'기본 본인부담률', cat:'15세 이하(2세 미만 영유아 제외)', cond:'', rate:'요양급여비용총액의 5%', meal:'식대총액의 50%', note:''},
+  {id:'d3', type:'inpatient', group:'기본 본인부담률', cat:'2세 미만 영유아', cond:'', rate:'면제', meal:'식대총액의 50%', note:''},
+  {id:'d4', type:'inpatient', group:'기본 본인부담률', cat:'자연분만', cond:'', rate:'면제', meal:'식대총액의 50%', note:''},
+  {id:'d5', type:'inpatient', group:'기본 본인부담률', cat:'고위험 임신부', cond:'', rate:'요양급여비용총액의 10%', meal:'식대총액의 50%', note:''},
+  {id:'d6', type:'inpatient', group:'기본 본인부담률', cat:'제왕절개분만', cond:'', rate:'면제', meal:'식대총액의 50%', note:''},
+  {id:'d7', type:'inpatient', group:'기본 본인부담률', cat:'장기 등 기증자의 장기등 적출', cond:'', rate:'면제', meal:'면제', note:''},
+  {id:'d8', type:'inpatient', group:'일반환자 특정 항목', cat:'특수장비', cond:'일반환자 해당 항목', rate:'S항 산정비용 × 외래 본인부담률', meal:'', note:'시행령 별표2 1호 나목 표 비고 3)'},
+  {id:'d9', type:'inpatient', group:'일반환자 특정 항목', cat:'격리입원료', cond:'일반환자 해당 항목', rate:'해당 비용의 10%', meal:'', note:'시행령 별표2 1호 가목 1)'},
+  {id:'d10', type:'inpatient', group:'일반환자 특정 항목', cat:'16일 이상 입원료 본인부담률 차등', cond:'16~30일 5% 상향 / 31일~ 10% 상향', rate:'기본 본인부담률에 상향분 가산', meal:'', note:'시행령 별표2 5호. 제외대상: 장기입원 불가피 환자(F014), 보훈, 산정특례 등 본인부담경감환자'},
+  {id:'d11', type:'inpatient', group:'일반환자 특정 항목', cat:'16세 이상 18세 이하 아동 치아홈메우기', cond:'일반환자 해당 항목', rate:'해당 비용의 10%', meal:'', note:'시행령 별표2 3호 차목'},
+  {id:'d12', type:'inpatient', group:'공통 적용 항목', cat:'선별급여 항목', cond:'', rate:'해당 비용의 30 · 50(60) · 80 · 90%', meal:'', note:'시행령 별표2 4호'},
+  {id:'d13', type:'inpatient', group:'공통 적용 항목', cat:'한방 추나요법', cond:'', rate:'해당 비용의 50% 또는 80%', meal:'', note:'시행령 별표2 3호 거목'},
+  {id:'d14', type:'inpatient', group:'공통 적용 항목', cat:'원격협의진찰료 자문료', cond:'', rate:'해당 비용의 0%', meal:'', note:'시행령 별표2 3호 타목 2)'},
+  {id:'d15', type:'inpatient', group:'공통 적용 항목', cat:'코로나 치료제', cond:'경구제 / 주사제', rate:'경구제 5% / 주사제 1.6%', meal:'', note:'시행령 별표2 3호 러목 등'},
+  {id:'d16', type:'inpatient', group:'공통 적용 항목', cat:'2·3인실 입원료 / 상급종합병원 4인실 / 선택입원군', cond:'상급종합병원·종합병원·요양병원 등 상위 기관 기준', rate:'의원급 별도 명시 없음 — 자료 확인 필요 시 추가해 주세요', meal:'', note:'참고용: 상급 기관 기준은 의원급에 그대로 적용되지 않을 수 있음', legal:true},
+
+  {id:'o1', type:'outpatient', group:'외래 특정 항목(65세 이상)', cat:'특수재료 및 관련 행위료', cond:'', rate:'T항 산정비용의 20%', meal:'', note:'시행령 별표2 1호 나목 표 하단 비고4)'},
+  {id:'o2', type:'outpatient', group:'외래 특정 항목(65세 이상)', cat:'선별급여 항목', cond:'', rate:'해당 비용의 30 · 50 · 80 · 90%', meal:'', note:'시행령 별표2 4호'},
+  {id:'o3', type:'outpatient', group:'외래 특정 항목(65세 이상)', cat:'고혈압(I10)·당뇨(E11) 상병 지속 진료', cond:'의과 의원 해당. 표1: 25,000원 초과 환자 / 표2: 투약처방 30,000원 초과, 미투약 25,000원 초과', rate:'해당 진찰료비용의 20%', meal:'', note:'시행령 별표2 1호 나목 표 하단 비고5)'},
+  {id:'o4', type:'outpatient', group:'외래 특정 항목(65세 이상)', cat:'정신건강의학과 개인 및 집단정신치료', cond:'', rate:'해당 비용의 10%', meal:'', note:'시행령 별표2 3호 파목'},
+  {id:'o5', type:'outpatient', group:'외래 특정 항목(65세 이상)', cat:'한방 추나요법', cond:'', rate:'해당 비용의 50% 또는 80%', meal:'', note:'시행령 별표2 3호 거목'},
+  {id:'o6', type:'outpatient', group:'외래 특정 항목(65세 이상)', cat:'원격협의진찰료 자문료', cond:'', rate:'해당 비용의 0%', meal:'', note:'시행령 별표2 3호 타목 2)'},
+  {id:'o7', type:'outpatient', group:'외래 특정 항목(65세 이상)', cat:'코로나 치료제', cond:'경구제 / 주사제', rate:'경구제 5% / 주사제 1.6%', meal:'', note:'시행령 별표2 3호 러목 등'},
+  {id:'o8', type:'outpatient', group:'외래 특정 항목(65세 이상)', cat:'만성질환자 통합관리료', cond:'', rate:'해당 비용의 20%(1세 이상 6세 미만: 14%)', meal:'', note:'시행령 별표2 3호 더목'},
+
+  {id:'o9', type:'outpatient', group:'외래 특정 항목(65세 미만)', cat:'특수재료 및 관련 행위료', cond:'', rate:'T항 산정비용의 20%(단, 6세 미만: 14%)', meal:'', note:'시행령 별표2 1호 나목 표 하단 비고4)'},
+  {id:'o10', type:'outpatient', group:'외래 특정 항목(65세 미만)', cat:'선별급여 항목', cond:'', rate:'해당 비용의 30 · 50 · 80 · 90%', meal:'', note:'시행령 별표2 4호'},
+  {id:'o11', type:'outpatient', group:'외래 특정 항목(65세 미만)', cat:'고혈압(I10)·당뇨(E11) 상병 지속 진료', cond:'일반* 환자 해당', rate:'해당 진찰료비용의 20%', meal:'', note:'시행령 별표2 1호 나목 표 하단 비고5)'},
+  {id:'o12', type:'outpatient', group:'외래 특정 항목(65세 미만)', cat:'18세 이하 아동 치아홈메우기', cond:'', rate:'해당 비용의 10%', meal:'', note:'시행령 별표2 3호 차목'},
+  {id:'o13', type:'outpatient', group:'외래 특정 항목(65세 미만)', cat:'정신건강의학과 개인 및 집단정신치료', cond:'', rate:'해당 비용의 10%(단, 6세 미만: 7%)', meal:'', note:'시행령 별표2 3호 파목'},
+  {id:'o14', type:'outpatient', group:'외래 특정 항목(65세 미만)', cat:'한방 추나요법', cond:'', rate:'해당 비용의 50% 또는 80%', meal:'', note:'시행령 별표2 3호 거목'},
+  {id:'o15', type:'outpatient', group:'외래 특정 항목(65세 미만)', cat:'원격협의진찰료 자문료', cond:'', rate:'해당 비용의 0%', meal:'', note:'시행령 별표2 3호 타목 2)'},
+  {id:'o16', type:'outpatient', group:'외래 특정 항목(65세 미만)', cat:'코로나 치료제', cond:'경구제 / 주사제', rate:'경구제 5% / 주사제 1.6%', meal:'', note:'시행령 별표2 3호 러목 등'},
+  {id:'o17', type:'outpatient', group:'외래 특정 항목(65세 미만)', cat:'만성질환자 통합관리료', cond:'', rate:'해당 비용의 20%(1세 이상 6세 미만: 14%)', meal:'', note:'시행령 별표2 3호 더목'},
+
+  {id:'o18', type:'outpatient', group:'외래 일반 항목', cat:'1세 이상 6세 미만', cond:'', rate:'일반환자 본인부담률의 70%(상급종합병원 진료 시 진찰료: 전액부담)', meal:'', note:'단, 보건기관 정액·약국 및 한국희귀의약품센터의 직접조제는 제외'},
+  {id:'o19', type:'outpatient', group:'외래 일반 항목', cat:'조산아·저체중출생아', cond:'', rate:'요양급여비용총액의 5%', meal:'', note:''},
+  {id:'o20', type:'outpatient', group:'외래 일반 항목', cat:'난임진료', cond:'', rate:'요양급여비용총액의 30%(상급종합병원 진료 시 진찰료: 전액부담)', meal:'', note:''},
+  {id:'o21', type:'outpatient', group:'외래 일반 항목', cat:'건강검진 확진 의료비 지원', cond:'의원 및 병원만 해당', rate:'요양급여비용총액의 0%', meal:'', note:''},
+  {id:'o22', type:'outpatient', group:'외래 일반 항목', cat:'상급종합병원 경증질환 외래진료', cond:'상급종합병원 외래진료 시 해당', rate:'요양급여비용총액의 100%', meal:'', note:''},
+
+  {id:'s1', type:'special', group:'차상위1종 특정 항목', cat:'식대', cond:'', rate:'기본식대의 20%', meal:'', note:''},
+  {id:'s2', type:'special', group:'차상위1종 특정 항목', cat:'선별급여 항목', cond:'', rate:'해당 비용의 30 · 50 · 80 · 90%', meal:'', note:'시행령 별표2 4호'},
+  {id:'s3', type:'special', group:'차상위1종 특정 항목', cat:'한방 추나요법', cond:'', rate:'해당 비용의 30% 또는 80%', meal:'', note:'시행령 별표2 3호 라목 9)'},
+  {id:'s4', type:'special', group:'차상위1종 특정 항목', cat:'원격협의진찰료 자문료', cond:'', rate:'해당 비용의 0%', meal:'', note:'시행령 별표2 3호 타목 2)'},
+  {id:'s5', type:'special', group:'차상위1종 특정 항목', cat:'코로나 치료제', cond:'경구제 · 주사제', rate:'경구제·주사제 비용의 0%', meal:'', note:'시행령 별표2 3호 러목 등'},
+
+  {id:'s6', type:'special', group:'차상위2종 특정 항목(입원)', cat:'식대', cond:'', rate:'해당 비용의 20%(단, 가산식대의 0%)', meal:'', note:''},
+  {id:'s7', type:'special', group:'차상위2종 특정 항목(입원)', cat:'선별급여 항목', cond:'', rate:'해당 비용의 30 · 50 · 80 · 90%', meal:'', note:'시행령 별표2 4호'},
+  {id:'s8', type:'special', group:'차상위2종 특정 항목(입원)', cat:'한방 추나요법', cond:'', rate:'해당 비용의 40% 또는 80%', meal:'', note:'시행령 별표2 3호 라목 10)'},
+  {id:'s9', type:'special', group:'차상위2종 특정 항목(입원)', cat:'원격협의진찰료 자문료', cond:'', rate:'해당 비용의 0%', meal:'', note:'시행령 별표2 3호 타목 2)'},
+  {id:'s10', type:'special', group:'차상위2종 특정 항목(입원)', cat:'코로나 치료제', cond:'경구제 · 주사제', rate:'경구제·주사제 비용의 0%', meal:'', note:'시행령 별표2 3호 러목 등'},
+
+  {id:'s11', type:'special', group:'차상위2종 특정 항목(외래)', cat:'선별급여 항목', cond:'', rate:'해당 비용의 30 · 50 · 80 · 90%', meal:'', note:'시행령 별표2 4호'},
+  {id:'s12', type:'special', group:'차상위2종 특정 항목(외래)', cat:'한방 추나요법', cond:'', rate:'해당 비용의 40% 또는 80%', meal:'', note:'시행령 별표2 3호 라목 10)'},
+  {id:'s13', type:'special', group:'차상위2종 특정 항목(외래)', cat:'원격협의진찰료 자문료', cond:'', rate:'해당 비용의 0%', meal:'', note:'시행령 별표2 3호 타목 2)'},
+  {id:'s14', type:'special', group:'차상위2종 특정 항목(외래)', cat:'코로나 치료제', cond:'경구제 · 주사제', rate:'경구제·주사제 비용의 0%', meal:'', note:'시행령 별표2 3호 러목 등'},
+
+  {id:'m1', type:'medicaid', group:'의료급여 특정 항목(입원)', cat:'식대 — 1종, 2종(일반·장애인)', cond:'', rate:'20%', meal:'', note:''},
+  {id:'m2', type:'medicaid', group:'의료급여 특정 항목(입원)', cat:'식대 — 중증질환자', cond:'특정기호 V191,V192,V193,V268,V275,V247,V248,V250,V273,V305,V306', rate:'5%', meal:'', note:''},
+  {id:'m3', type:'medicaid', group:'의료급여 특정 항목(입원)', cat:'식대 — 자연분만(F001)', cond:'', rate:'무료', meal:'', note:''},
+  {id:'m4', type:'medicaid', group:'의료급여 특정 항목(입원)', cat:'식대 — 6세미만(F019)', cond:'', rate:'무료', meal:'', note:''},
+  {id:'m5', type:'medicaid', group:'의료급여 특정 항목(입원)', cat:'식대 — 행려환자', cond:'', rate:'무료', meal:'', note:''},
+  {id:'m6', type:'medicaid', group:'의료급여 특정 항목(입원)', cat:'치아홈메우기', cond:'16세 이상 18세 이하인 자(2종)', rate:'5%', meal:'', note:''},
+  {id:'m7', type:'medicaid', group:'의료급여 특정 항목(입원)', cat:'2·3인실 입원료', cond:'상급종합병원·종합병원·한방병원·정신병원·병원 등 상위 기관 기준', rate:'의원급 별도 명시 없음 — 자료 확인 필요 시 추가해 주세요', meal:'', note:'참고: 본인부담 보상제·상한제 해당되지 않음, 2종 장애인의 경우 장애인의료비 지원 없음', legal:true},
+
+  {id:'m8', type:'medicaid', group:'의료급여 특정기호(입원)', cat:'V103', cond:'인체면역결핍바이러스 질환자의 해당상병(B20~24) 입원진료(2종)', rate:'무료', meal:'', note:'의료급여기준 제17조의2'},
+  {id:'m9', type:'medicaid', group:'의료급여 특정기호(입원)', cat:'F017', cond:'뇌사자 등 장기기증', rate:'무료', meal:'', note:'의료급여기준'},
+  {id:'m10', type:'medicaid', group:'의료급여 특정기호(입원)', cat:'F001', cond:'자연분만(2종)', rate:'무료', meal:'', note:'영[별표1] 제2호다목'},
+  {id:'m11', type:'medicaid', group:'의료급여 특정기호(입원)', cat:'F019', cond:'6세미만(2종)', rate:'무료', meal:'', note:'영[별표1] 제2호다목'},
+  {id:'m12', type:'medicaid', group:'의료급여 특정기호(입원)', cat:'F013', cond:'제왕절개 분만(2종)', rate:'무료', meal:'', note:'영[별표1] 제2호다목'},
+  {id:'m13', type:'medicaid', group:'의료급여 특정기호(입원)', cat:'V191, V192, V268, V273, V275', cond:'중증질환자(2종)', rate:'무료', meal:'', note:'영[별표1] 제2호라목'},
+  {id:'m14', type:'medicaid', group:'의료급여 특정기호(입원)', cat:'V010', cond:'잠복결핵 치료 관련 진료', rate:'무료', meal:'', note:'영[별표1] 제2호서목'},
+  {id:'m15', type:'medicaid', group:'의료급여 특정기호(입원)', cat:'F020', cond:'6세이상 15세이하(2종)', rate:'요양급여비용총액의 3%', meal:'', note:'영[별표1] 제2호거목'},
+  {id:'m16', type:'medicaid', group:'의료급여 특정기호(입원)', cat:'F011', cond:'고위험 임신부(2종)', rate:'요양급여비용총액의 5%', meal:'', note:'영[별표1] 제2호사목'},
+  {id:'m17', type:'medicaid', group:'의료급여 특정기호(입원)', cat:'V800, V810', cond:'치매질환자(2종)', rate:'요양급여비용총액의 5%', meal:'', note:'영[별표1] 제2호하목'},
+  {id:'m18', type:'medicaid', group:'의료급여 특정기호(입원)', cat:'F023', cond:'연장승인(선택의료급여기관) 미신청자(불승인자)(1,2종)', rate:'요양급여비용총액의 20%', meal:'', note:'영[별표1] 제3호다목'},
+
+  {id:'mc1', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'M003', cat:'18세 미만인자', cond:'', rate:'무료', meal:'', note:'영[별표1] 제1호다목'},
+  {id:'mc2', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'M004', cat:'임산부', cond:'', rate:'무료', meal:'', note:'영[별표1] 제1호다목'},
+  {id:'mc3', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'M007', cat:'20세 미만인 자로 중·고등학교 재학 중인 자', cond:'', rate:'무료', meal:'', note:'영[별표1] 제1호다목'},
+  {id:'mc4', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'M008', cat:'가정간호대상자', cond:'', rate:'무료', meal:'', note:'영[별표1] 제1호다목'},
+  {id:'mc5', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'M009', cat:'응급환자인 선택의료급여기관 이용자', cond:'', rate:'무료', meal:'', note:'영[별표1] 제1호다목'},
+  {id:'mc6', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'M010', cat:'장애인보조기기 지급받는 선택의료급여기관 이용자', cond:'', rate:'무료', meal:'', note:'영[별표1] 제1호다목'},
+  {id:'mc7', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'M011', cat:'행려환자', cond:'', rate:'무료', meal:'', note:'영[별표1] 제1호다목'},
+  {id:'mc8', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'M012', cat:'노숙인 진료시설을 이용하는 노숙인', cond:'', rate:'무료', meal:'', note:'영[별표1] 제1호다목'},
+  {id:'mc9', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'M013', cat:'응급·분만으로 노숙인 진료시설 이외의 의료급여기관을 이용하는 노숙인', cond:'', rate:'무료', meal:'', note:'영[별표1] 제1호다목'},
+  {id:'mc10', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'M014', cat:'노숙인 진료시설에서 의뢰되어 제3차의료급여기관을 이용하는 노숙인', cond:'', rate:'무료', meal:'', note:'영[별표1] 제1호다목'},
+  {id:'mc11', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'M016', cat:'등록 중증질환자', cond:'', rate:'무료', meal:'', note:'영[별표1] 제1호다목'},
+  {id:'mc12', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'M017', cat:'등록 결핵질환자', cond:'', rate:'무료', meal:'', note:'영[별표1] 제1호다목'},
+  {id:'mc13', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'M018', cat:'등록 희귀질환자', cond:'', rate:'무료', meal:'', note:'영[별표1] 제1호다목'},
+  {id:'mc14', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'M019', cat:'등록 중증난치질환자', cond:'', rate:'무료', meal:'', note:'영[별표1] 제1호다목'},
+  {id:'mc15', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'M001', cat:'선택의료급여기관 적용자(조건부 연장승인자)', cond:'', rate:'무료', meal:'', note:''},
+  {id:'mc16', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'M002', cat:'선택의료급여기관 자발적 참여자', cond:'', rate:'무료', meal:'', note:''},
+  {id:'mc17', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'B001', cat:'선택의료급여기관 적용자(조건부 연장승인자)', cond:'', rate:'외래 본인부담률', meal:'', note:''},
+  {id:'mc18', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'B002', cat:'선택의료급여기관 자발적 참여자', cond:'', rate:'외래 본인부담률', meal:'', note:''},
+  {id:'mc19', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'B003', cat:'응급환자인 선택의료급여기관 이용자', cond:'', rate:'외래 본인부담률', meal:'', note:''},
+  {id:'mc20', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'B004', cat:'장애인보조기기 지급받는 선택의료급여기관 이용자', cond:'', rate:'외래 본인부담률', meal:'', note:''},
+  {id:'mc21', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'B005', cat:'선택의료급여기관에서 의뢰된 자', cond:'', rate:'외래 본인부담률', meal:'', note:''},
+  {id:'mc22', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'B006', cat:'선택의료급여기관에서 의뢰되어 재의뢰된 자', cond:'', rate:'외래 본인부담률', meal:'', note:''},
+  {id:'mc23', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'B007', cat:'선택의료급여기관 적용대상자이면서 사회복지시설 계약의사 진료 후 원외처방전 발행 또는 원내 직접 조제·투약받은 자', cond:'', rate:'원외 1,000원 / 원내 1,500원', meal:'', note:''},
+  {id:'mc24', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'B008', cat:'제3선택의료급여기관(한의원) 또는 제4선택의료급여기관(치과의원)에서 진료받은 자', cond:'', rate:'외래 본인부담률', meal:'', note:''},
+  {id:'mc25', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'B009', cat:'경과규정 적용자 등 의료급여의뢰서를 제출한 것으로 갈음하는 자', cond:'', rate:'외래 본인부담률', meal:'', note:''},
+  {id:'mc26', type:'medicaid', group:'의료급여 외래 부담면제·선택기관 코드(외래)', code:'B099', cat:'감염병 확산 등 긴급한 사유로 외래로 의료급여를 받은 선택의료급여기관 적용자', cond:'', rate:'외래 본인부담률', meal:'', note:''},
+
+  {id:'mo1', type:'medicaid', group:'의료급여 외래 특정 항목(외래)', cat:'임신부', cond:'2종 · B010·F015* · 제1차 의료급여기관(의원)', rate:'CT, MRI, PET: 5%', meal:'', note:'영[별표1] 제2호자목. 제2·3차의료급여기관은 총액의 5%(의원급 해당 없음)'},
+  {id:'mo2', type:'medicaid', group:'의료급여 외래 특정 항목(외래)', cat:'조산아와 저체중 출생아', cond:'2종 · B011·F016* · 제1차 의료급여기관(의원)', rate:'CT, MRI, PET: 5%', meal:'', note:'영[별표1] 제2호차목. 제2·3차의료급여기관은 총액의 5%(의원급 해당 없음)'},
+  {id:'mo3', type:'medicaid', group:'의료급여 외래 특정 항목(외래)', cat:'치매질환자', cond:'2종 · B013·(V800,V810)* · 제1차 의료급여기관(의원)', rate:'CT, MRI, PET: 5%', meal:'', note:'영[별표1] 제2호하목. 제2·3차의료급여기관은 총액의 5%(의원급 해당 없음)'},
+  {id:'mo4', type:'medicaid', group:'의료급여 외래 특정 항목(외래)', cat:'연장승인(선택의료급여기관) 미신청자(불승인자)', cond:'1,2종 · B014·F023*', rate:'요양급여비용총액의 30%', meal:'', note:'영[별표1] 제3호다목'},
+  {id:'mo5', type:'medicaid', group:'의료급여 외래 특정 항목(외래)', cat:'1세미만', cond:'2종 · F024 · 제1차 의료급여기관(의원)', rate:'무료', meal:'', note:'영[별표1] 제2호머목·버목. 제2·3차의료급여기관은 별도 적용(의원급 해당 없음)'},
+  {id:'mo6', type:'medicaid', group:'의료급여 외래 특정 항목(외래)', cat:'가정간호 대상자', cond:'V008,V194,V231,V293,V251,V274,V801,V811', rate:'1종: 무료 / 2종: 요양급여비용총액의 10%', meal:'', note:'의료급여기준 제17조의4'},
+  {id:'mo7', type:'medicaid', group:'의료급여 외래 특정 항목(외래)', cat:'경증질환 약국 약제비', cond:'V252,V352,V452', rate:'3%', meal:'', note:'영[별표1] 제1호바목, 제2호아목'},
+  {id:'mo8', type:'medicaid', group:'의료급여 외래 특정 항목(외래)', cat:'항정신병 장기지속형 주사제', cond:'', rate:'2% (본인부담면제자: 무료 / 2종 장애인 제2·3차의료급여기관: 무료·장애인의료비)', meal:'', note:'영[별표1] 제1호사목, 제2호카목'},
+  {id:'mo9', type:'medicaid', group:'의료급여 외래 특정 항목(외래)', cat:'인체면역결핍바이러스 질환자의 해당상병(B20~24) 당일 외래진료', cond:'1,2종 · V103', rate:'무료', meal:'', note:'의료급여기준 제17조의2'},
+  {id:'mo10', type:'medicaid', group:'의료급여 외래 특정 항목(외래)', cat:'국가건강검진 시 시행한 보건복지부장관이 정하여 고시하는 확진검사', cond:'F022', rate:'무료', meal:'', note:'영[별표1] 제1호아목1), 제2호러목1)'},
+  {id:'mo11', type:'medicaid', group:'의료급여 외래 특정 항목(외래)', cat:'원격협의진찰료-자문료', cond:'', rate:'무료', meal:'', note:'영[별표1] 제1호아목2), 제2호러목2)'},
+  {id:'mo12', type:'medicaid', group:'의료급여 외래 특정 항목(외래)', cat:'회송료', cond:'', rate:'무료', meal:'', note:'영[별표1] 제1호아목3), 제2호러목3)'},
+  {id:'mo13', type:'medicaid', group:'의료급여 외래 특정 항목(외래)', cat:'잠복결핵 치료 관련 진료', cond:'1,2종 · B030·V010*', rate:'무료', meal:'', note:'영[별표1] 제1호자목, 제2호서목'},
+  {id:'mo14', type:'medicaid', group:'의료급여 외래 특정 항목(외래)', cat:'외래진료 본인부담 차등화 적용 대상자', cond:'1·2종 · B016·F029*', rate:'요양급여비용총액의 30%', meal:'', note:'시행규칙 [별표1의2] 제2호'},
+  {id:'mo15', type:'medicaid', group:'의료급여 외래 특정 항목(외래)', cat:'보건복지부장관이 정하여 고시하는 만성질환자 / 조현병(F20~29) 등 정신질환자 / 18세이하 치아홈메우기 / 1세미만 만성질환자', cond:'제2차·제3차 의료급여기관 전용 항목', rate:'의원급 별도 명시 없음 — 자료 확인 필요 시 추가해 주세요', meal:'', note:'참고: 상위 기관(제2·3차) 전용 규정으로 의원급에는 그대로 적용되지 않음', legal:true},
+
+
+  {id:'cr1', type:'coderef', group:'특정기호 전체', code:'F001', cat:'자연분만(본인부담 면제,식대50%)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr2', type:'coderef', group:'특정기호 전체', code:'F003', cat:'의약분업 예외환자가 요양기관의 외래에서 원내조제하여 약가총액에 대한 본인부담율을 30% 적용하는 경우', cond:'', rate:'', meal:'', note:''},
+  {id:'cr3', type:'coderef', group:'특정기호 전체', code:'F005', cat:'신생아 입원진료(본인부담 면제)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr4', type:'coderef', group:'특정기호 전체', code:'F006', cat:'요양병원 입원 본인부담율 40% 적용환자(신체기능저하군)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr5', type:'coderef', group:'특정기호 전체', code:'F007', cat:'차상위2종 정신건강의학과 입원진료(본인부담 10%,기본식대20%)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr6', type:'coderef', group:'특정기호 전체', code:'F009', cat:'잠복결핵감염 검진비지원대상자', cond:'', rate:'', meal:'', note:''},
+  {id:'cr7', type:'coderef', group:'특정기호 전체', code:'F011', cat:'고위험 임신부 입원진료(본인부담10%,식대50%)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr8', type:'coderef', group:'특정기호 전체', code:'F012', cat:'여성 청소년 대상 사람유두종바이러스(HPV) 예방접종 및 진찰·상담사업 지원대상자', cond:'', rate:'', meal:'', note:''},
+  {id:'cr9', type:'coderef', group:'특정기호 전체', code:'F013', cat:'제왕절개분만에 대한 입원진료에 대하여 요양급여를 받은자(본인부담 5%,식대50%)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr10', type:'coderef', group:'특정기호 전체', code:'F014', cat:'16일이상 장기입원이 불가피한 경우', cond:'', rate:'', meal:'', note:''},
+  {id:'cr11', type:'coderef', group:'특정기호 전체', code:'F015', cat:'임신부 외래진료(본인부담 10%)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr12', type:'coderef', group:'특정기호 전체', code:'F016', cat:'조산아 및 저체중 출생아의 외래진료(본인부담 5%)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr13', type:'coderef', group:'특정기호 전체', code:'F017', cat:'장기등 기증자의 장기등 적출에 대한 요양급여비용(본인부담 면제)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr14', type:'coderef', group:'특정기호 전체', code:'F018', cat:'15세이하 아동의 입원진료(본인부담5%,식대50%)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr15', type:'coderef', group:'특정기호 전체', code:'F019', cat:'차상위2종, 의료급여2종 6세미만 아동의 입원진료(본인부담 면제,기본식대20%)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr16', type:'coderef', group:'특정기호 전체', code:'F020', cat:'차상위2종, 의료급여2종 6세이상 15세이하 아동의 입원진료(본인부담 3%,기본식대20%)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr17', type:'coderef', group:'특정기호 전체', code:'F021', cat:'난임진료에 대한 요양급여비용(본인부담 30%)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr18', type:'coderef', group:'특정기호 전체', code:'F022', cat:'본인부담 면제 대상자(건강검진 확진검사비용)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr19', type:'coderef', group:'특정기호 전체', code:'F023', cat:'연장승인(선택의료급여기관) 미신청자(불승인자)로서 의료급여법 시행령 [별표1]제3호 다목에 따른 의료급여비용을 적용받는 사람(1, 2종)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr20', type:'coderef', group:'특정기호 전체', code:'F024', cat:'1세미만 외래진료(본인부담 5%)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr21', type:'coderef', group:'특정기호 전체', code:'F025', cat:'“약국 요양급여비용총액의 본인부담률 산정특례 대상” 질환 환자가 상급종합병원에서 진료 받는 경우, 보건복지부장관이 정하여 고시한 본인부담률을 적용하는 외래 재진 진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr22', type:'coderef', group:'특정기호 전체', code:'F026', cat:'“약국 요양급여비용총액의 본인부담률 산정특례 대상” 질병을 주상병으로 상급종합병원에서 받은 외래 초진 진료 시 별표 2 제1호나목에 따라 부담한 금액을 본인부담상한액에서 제외하는 경우', cond:'', rate:'', meal:'', note:''},
+  {id:'cr23', type:'coderef', group:'특정기호 전체', code:'F027', cat:'신생아 입원진료를 제외한 2세 미만 영유아의 입원진료(본인부담 면제,식대50%)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr24', type:'coderef', group:'특정기호 전체', code:'F028', cat:'자립준비청년 의료비 지원 대상자의 지원 관련 진료(본인부담 14%)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr25', type:'coderef', group:'특정기호 전체', code:'F029', cat:'연간 외래진료 횟수가 365회 초과하는 대상자의 외래진료(건보본인부담 90%,급여본인부담 30%)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr26', type:'coderef', group:'특정기호 전체', code:'F030', cat:'만성질환 통합관리 대상자의 해당진료(본인부담 20%)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr27', type:'coderef', group:'특정기호 전체', code:'F031', cat:'응급실 내원한 경증응급환자 또는 비응급환자 진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr28', type:'coderef', group:'특정기호 전체', code:'S002', cat:'진료의뢰-회송 시범사업-회송료 명세서', cond:'', rate:'', meal:'', note:''},
+  {id:'cr29', type:'coderef', group:'특정기호 전체', code:'S010', cat:'장애인 건강 주치의 시범사업', cond:'', rate:'', meal:'', note:''},
+  {id:'cr30', type:'coderef', group:'특정기호 전체', code:'S011', cat:'수술 전후 관리 교육상담 등 시범사업 대상 청구건', cond:'', rate:'', meal:'', note:''},
+  {id:'cr31', type:'coderef', group:'특정기호 전체', code:'S012', cat:'일차의료 만성질환관리 시범사업 대상', cond:'', rate:'', meal:'', note:''},
+  {id:'cr32', type:'coderef', group:'특정기호 전체', code:'S013', cat:'맞춤형 검진바우처 시범사업', cond:'', rate:'', meal:'', note:''},
+  {id:'cr33', type:'coderef', group:'특정기호 전체', code:'S017', cat:'일차의료 방문진료 수가 시범사업', cond:'', rate:'', meal:'', note:''},
+  {id:'cr34', type:'coderef', group:'특정기호 전체', code:'S021', cat:'1형 당뇨병 환자 재택의로 시범사업', cond:'', rate:'', meal:'', note:''},
+  {id:'cr35', type:'coderef', group:'특정기호 전체', code:'S029', cat:'진료의뢰-회송 시범사업-의뢰료 명세서', cond:'', rate:'', meal:'', note:''},
+  {id:'cr36', type:'coderef', group:'특정기호 전체', code:'S036', cat:'장애인 건강 주치의 시범사업 맞춤형 검진바우처', cond:'', rate:'', meal:'', note:''},
+  {id:'cr37', type:'coderef', group:'특정기호 전체', code:'S039', cat:'동네의원 마음건강돌봄 연계 시범사업 대상', cond:'', rate:'', meal:'', note:''},
+  {id:'cr38', type:'coderef', group:'특정기호 전체', code:'S045', cat:'치매관리주치의 시범사업 대상', cond:'', rate:'', meal:'', note:''},
+  {id:'cr39', type:'coderef', group:'특정기호 전체', code:'S046', cat:'상급종합병원 구조전환 지원 사업(진료협력병원 전문 의뢰료)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr40', type:'coderef', group:'특정기호 전체', code:'S047', cat:'상급종합병원 구조전환 지원 사업(진료협력병원 등 회송환자 관리료)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr41', type:'coderef', group:'특정기호 전체', code:'S048', cat:'장기요양 1?2 등급 와상환자', cond:'', rate:'', meal:'', note:''},
+  {id:'cr42', type:'coderef', group:'특정기호 전체', code:'S049', cat:'요양비(산소치료, 인공호흡기) 급여 대상자', cond:'', rate:'', meal:'', note:''},
+  {id:'cr43', type:'coderef', group:'특정기호 전체', code:'V000', cat:'본인부담의 제외 대상이 되는 결핵 질환은 결핵질환과 잠복결핵감염으로 환자의 세부기준은 아래와 같으며, 해당 환자가 결핵질환 치료를 진료 받은 당일 외래진료 또는 입원진료에 대해 적용', cond:'', rate:'', meal:'', note:''},
+  {id:'cr44', type:'coderef', group:'특정기호 전체', code:'V001', cat:'인공신장투석 실시 당일 외래진료 또는 해당 시술 관련 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr45', type:'coderef', group:'특정기호 전체', code:'V003', cat:'계속적 복막관류술 실시, 복막관류액 수령 당일 외래진료 또는 해당 시술 관련 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr46', type:'coderef', group:'특정기호 전체', code:'V005', cat:'신 이식술 및 이와 직접 관련된 입원치료 및 외래진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr47', type:'coderef', group:'특정기호 전체', code:'V006', cat:'고엽제후유 의증 질환자', cond:'', rate:'', meal:'', note:''},
+  {id:'cr48', type:'coderef', group:'특정기호 전체', code:'V008', cat:'등록 암환자·희귀질환자·중증난치질환자·중증화상환자·결핵질환자·잠복결핵감염자·치매 환자를 제외한 환자가 가정간호를 받은 경우(등록 암환자·희귀질환자·중증난치질환자·중증화상환자·결핵질환자·잠복결핵감염자·치매 환자가 타 상병만으로 가정간호를 받은 경우 포함)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr49', type:'coderef', group:'특정기호 전체', code:'V009', cat:'혈우병 환자가 항응고인자· 동결침전제제 등의 약제 및 기타 혈우병치료를 받은 당일 외래진료 또는 해당 치료 관련 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr50', type:'coderef', group:'특정기호 전체', code:'V010', cat:'본인부담의 제외 대상이 되는 결핵 질환은 결핵질환과 잠복결핵감염으로 환자의 세부기준은 아래와 같으며, 해당 환자가 잠복결핵감염 치료를 진료 받은  당일 외래진료 또는 입원진료에 대해 적용(본인부담 0%)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr51', type:'coderef', group:'특정기호 전체', code:'V012', cat:'중증근무력증 및 기타 근신경장애(G70), 근육의 원발성 장애(G71) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr52', type:'coderef', group:'특정기호 전체', code:'V013', cat:'간 이식술 및 이와 직접 관련된 입원치료 및 외래진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr53', type:'coderef', group:'특정기호 전체', code:'V014', cat:'췌장 이식술 및 이와 직접 관련된 입원치료 및 외래진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr54', type:'coderef', group:'특정기호 전체', code:'V015', cat:'심장 이식술 및 이와 직접 관련된 입원치료 및 외래진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr55', type:'coderef', group:'특정기호 전체', code:'V021', cat:'터너증후군(Q96) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr56', type:'coderef', group:'특정기호 전체', code:'V022', cat:'다발성 경화증(G35) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr57', type:'coderef', group:'특정기호 전체', code:'V023', cat:'후천성 순수적혈구무형성[적모구감소](D60), 기타 무형성빈혈(D61)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr58', type:'coderef', group:'특정기호 전체', code:'V073', cat:'조혈모세포공여자', cond:'', rate:'', meal:'', note:''},
+  {id:'cr59', type:'coderef', group:'특정기호 전체', code:'V074', cat:'신장 공여자', cond:'', rate:'', meal:'', note:''},
+  {id:'cr60', type:'coderef', group:'특정기호 전체', code:'V075', cat:'간공여자', cond:'', rate:'', meal:'', note:''},
+  {id:'cr61', type:'coderef', group:'특정기호 전체', code:'V076', cat:'췌장 공여자', cond:'', rate:'', meal:'', note:''},
+  {id:'cr62', type:'coderef', group:'특정기호 전체', code:'V077', cat:'심장 공여자', cond:'', rate:'', meal:'', note:''},
+  {id:'cr63', type:'coderef', group:'특정기호 전체', code:'V078', cat:'폐 공여자', cond:'', rate:'', meal:'', note:''},
+  {id:'cr64', type:'coderef', group:'특정기호 전체', code:'V081', cat:'제대혈조혈모세포 이식환자', cond:'', rate:'', meal:'', note:''},
+  {id:'cr65', type:'coderef', group:'특정기호 전체', code:'V082', cat:'자가조혈모세포 이식 환자', cond:'', rate:'', meal:'', note:''},
+  {id:'cr66', type:'coderef', group:'특정기호 전체', code:'V083', cat:'동종조혈모세포 이식 환자', cond:'', rate:'', meal:'', note:''},
+  {id:'cr67', type:'coderef', group:'특정기호 전체', code:'V084', cat:'신장 이식환자', cond:'', rate:'', meal:'', note:''},
+  {id:'cr68', type:'coderef', group:'특정기호 전체', code:'V085', cat:'간 이식환자', cond:'', rate:'', meal:'', note:''},
+  {id:'cr69', type:'coderef', group:'특정기호 전체', code:'V086', cat:'췌장 이식환자', cond:'', rate:'', meal:'', note:''},
+  {id:'cr70', type:'coderef', group:'특정기호 전체', code:'V087', cat:'심장 이식환자', cond:'', rate:'', meal:'', note:''},
+  {id:'cr71', type:'coderef', group:'특정기호 전체', code:'V088', cat:'폐 이식환자', cond:'', rate:'', meal:'', note:''},
+  {id:'cr72', type:'coderef', group:'특정기호 전체', code:'V100', cat:'약국 요양급여비용총액의 본인부담률 산정특례 대상에서 제외하는 경우', cond:'', rate:'', meal:'', note:''},
+  {id:'cr73', type:'coderef', group:'특정기호 전체', code:'V102', cat:'중추신경계통의 비정형바이러스감염(A81)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr74', type:'coderef', group:'특정기호 전체', code:'V103', cat:'인체면역결핍바이러스병(B20~B24)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr75', type:'coderef', group:'특정기호 전체', code:'V106', cat:'정성적 혈소판결손(D69.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr76', type:'coderef', group:'특정기호 전체', code:'V108', cat:'선천성 무과립구증, 선천성 호중구 감소, 영아 유전성 무과립구증, 무과립구증, 무과립구성 안지나, 호중구감소 NOS, 주기성 호중구감소, 코스트만병, 순환성 호중구감소, 호중구감소성 비장비대, 베르너-슐츠병(D70)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr77', type:'coderef', group:'특정기호 전체', code:'V109', cat:'다형핵호중구의 기능장애(D71)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr78', type:'coderef', group:'특정기호 전체', code:'V110', cat:'림프세망 및 세망조직구 조직의 참여를 동반한 기타 명시된 질환(D76.1,D76.2,D76.3)환자가 해당 상병 관련 진료를 받은 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr79', type:'coderef', group:'특정기호 전체', code:'V111', cat:'면역결핍증 및 사르코이드증(D80~D84, D86)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr80', type:'coderef', group:'특정기호 전체', code:'V112', cat:'말단비대증 및 뇌하수체거인증(E22.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr81', type:'coderef', group:'특정기호 전체', code:'V114', cat:'쿠싱증후군(E24)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr82', type:'coderef', group:'특정기호 전체', code:'V115', cat:'부신생식기장애(E25)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr83', type:'coderef', group:'특정기호 전체', code:'V116', cat:'부신의 기타장애(E27.1, E27.2, E27.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr84', type:'coderef', group:'특정기호 전체', code:'V117', cat:'대사장애(E70~E77)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr85', type:'coderef', group:'특정기호 전체', code:'V118', cat:'기타 포르피린증(E80.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr86', type:'coderef', group:'특정기호 전체', code:'V119', cat:'구리대사장애(윌슨병 등: E83.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr87', type:'coderef', group:'특정기호 전체', code:'V120', cat:'낭성섬유증(E84)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr88', type:'coderef', group:'특정기호 전체', code:'V121', cat:'아밀로이드증(E85)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr89', type:'coderef', group:'특정기호 전체', code:'V122', cat:'레트 증후군(F84.2), 카다실(F01.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr90', type:'coderef', group:'특정기호 전체', code:'V123', cat:'일차적으로 중추신경계통에 영향을 주는 계통성 위축(G10~G13)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료(G12.28은 제외)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr91', type:'coderef', group:'특정기호 전체', code:'V124', cat:'파킨슨병(G20)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr92', type:'coderef', group:'특정기호 전체', code:'V125', cat:'뇌전증지속상태(G41)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr93', type:'coderef', group:'특정기호 전체', code:'V126', cat:'염증성 다발 신경병증(G61)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr94', type:'coderef', group:'특정기호 전체', code:'V127', cat:'심근병증 (I42.0~I42.5)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr95', type:'coderef', group:'특정기호 전체', code:'V128', cat:'모야모야병(I67.5)환자가 해당상병으로 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr96', type:'coderef', group:'특정기호 전체', code:'V129', cat:'폐색혈전혈관염[버거병](I73.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr97', type:'coderef', group:'특정기호 전체', code:'V130', cat:'크론병[국소성 장염](K50)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr98', type:'coderef', group:'특정기호 전체', code:'V131', cat:'궤양성 대장염(K51)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr99', type:'coderef', group:'특정기호 전체', code:'V132', cat:'보통 천포창(L10.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr100', type:'coderef', group:'특정기호 전체', code:'V133', cat:'연소성 관절염(M08.0~M08.3)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr101', type:'coderef', group:'특정기호 전체', code:'V134', cat:'결절성 다발 동맥염 및 관련 병태(M30.0~M30.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr102', type:'coderef', group:'특정기호 전체', code:'V135', cat:'기타 괴사성 혈관병증(M31.0~M31.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr103', type:'coderef', group:'특정기호 전체', code:'V136', cat:'전신홍반루프스(M32.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr104', type:'coderef', group:'특정기호 전체', code:'V137', cat:'피부다발근염(M33)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr105', type:'coderef', group:'특정기호 전체', code:'V138', cat:'전신경화증(M34)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr106', type:'coderef', group:'특정기호 전체', code:'V139', cat:'결합조직의 기타 전신침범(M35.0~M35.7)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr107', type:'coderef', group:'특정기호 전체', code:'V140', cat:'강직척추염(M45)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr108', type:'coderef', group:'특정기호 전체', code:'V141', cat:'신장성 요붕증(N25.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr109', type:'coderef', group:'특정기호 전체', code:'V142', cat:'신생아의 호흡곤란(P22)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr110', type:'coderef', group:'특정기호 전체', code:'V143', cat:'아놀드-키아리증후군(Q07.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr111', type:'coderef', group:'특정기호 전체', code:'V144', cat:'심장방실 및 연결의 선천기형(Q20.0~Q20.3, Q20.5)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr112', type:'coderef', group:'특정기호 전체', code:'V145', cat:'폐동맥판 폐쇄(Q22.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr113', type:'coderef', group:'특정기호 전체', code:'V146', cat:'삼첨판 폐쇄(Q22.4), 에브스타인이상(Q22.5), 형성저하성 우심증후군(Q22.6)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr114', type:'coderef', group:'특정기호 전체', code:'V147', cat:'대동맥판 및 승모판의 선천 기형(Q23)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr115', type:'coderef', group:'특정기호 전체', code:'V148', cat:'관상동맥혈관의 기형(Q24.5)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr116', type:'coderef', group:'특정기호 전체', code:'V149', cat:'폐동맥의 폐쇄(Q25.5)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr117', type:'coderef', group:'특정기호 전체', code:'V150', cat:'대정맥혈관의 선천기형(Q26.0~Q26.6)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr118', type:'coderef', group:'특정기호 전체', code:'V151', cat:'두개안면골이골증(크루존병:Q75.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr119', type:'coderef', group:'특정기호 전체', code:'V154', cat:'다골성 섬유성 형성이상 (Q78.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr120', type:'coderef', group:'특정기호 전체', code:'V155', cat:'달리 분류되지 않은 근골격계통의 선천기형(Q79)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr121', type:'coderef', group:'특정기호 전체', code:'V156', cat:'신경섬유종증(비악성 : 폰 렉클링하우젠병 :Q85.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr122', type:'coderef', group:'특정기호 전체', code:'V157', cat:'(이상형태성)태아알코올증후군(Q86.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr123', type:'coderef', group:'특정기호 전체', code:'V158', cat:'주로 단신과 관련된 선천기형 증후군(프라더-윌리증후군 등 :Q87.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr124', type:'coderef', group:'특정기호 전체', code:'V159', cat:'다운증후군(Q90)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr125', type:'coderef', group:'특정기호 전체', code:'V160', cat:'에드워즈 증후군 및 파타우 증후군(Q91)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr126', type:'coderef', group:'특정기호 전체', code:'V161', cat:'정신질환자가 해당상병(F20~F29)으로 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr127', type:'coderef', group:'특정기호 전체', code:'V162', cat:'뇌하수체의 양성신생물(D35.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr128', type:'coderef', group:'특정기호 전체', code:'V163', cat:'포도당-6-인산탈수소효소결핍에 의한 빈혈(D55.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr129', type:'coderef', group:'특정기호 전체', code:'V164', cat:'해당 효소의 장애에 의한 빈혈(D55.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr130', type:'coderef', group:'특정기호 전체', code:'V165', cat:'콜만증후군, 쉬한 증후군(E23.0)환자가 해당 상병 관련 진료를 받은 당일  외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr131', type:'coderef', group:'특정기호 전체', code:'V166', cat:'기타 명시된 내분비장애(E34.8) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr132', type:'coderef', group:'특정기호 전체', code:'V167', cat:'멜커슨증후군(멜케르손-로젠탈 증후군:G51.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr133', type:'coderef', group:'특정기호 전체', code:'V168', cat:'복합부위통증증후군 Ⅱ형(G90.6) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr134', type:'coderef', group:'특정기호 전체', code:'V169', cat:'유전성 운동 및 감각 신경병증(샤르코-마리-치아질환등:G60.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr135', type:'coderef', group:'특정기호 전체', code:'V170', cat:'달리분류된 감염성 및 기생충성 질환에서의 다발 신경병증(G63.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr136', type:'coderef', group:'특정기호 전체', code:'V172', cat:'척수공동증 및 연수공동증(G95.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr137', type:'coderef', group:'특정기호 전체', code:'V173', cat:'버드-키아리 증후군(I82.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr138', type:'coderef', group:'특정기호 전체', code:'V174', cat:'원발성 담즙성 경변증(K74.3)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr139', type:'coderef', group:'특정기호 전체', code:'V175', cat:'자가면역성 간염(K75.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr140', type:'coderef', group:'특정기호 전체', code:'V176', cat:'후천성 수포성 표피박리증(L12.3)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr141', type:'coderef', group:'특정기호 전체', code:'V177', cat:'복합부위통증증후군 Ⅰ형(G90.5)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr142', type:'coderef', group:'특정기호 전체', code:'V178', cat:'재발성 다발 연골염(M94.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr143', type:'coderef', group:'특정기호 전체', code:'V179', cat:'이분척추 (Q05)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr144', type:'coderef', group:'특정기호 전체', code:'V180', cat:'척수이개증(Q06.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr145', type:'coderef', group:'특정기호 전체', code:'V181', cat:'담관의 폐쇄(Q44.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr146', type:'coderef', group:'특정기호 전체', code:'V182', cat:'하악안면골이골증(Q75.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr147', type:'coderef', group:'특정기호 전체', code:'V183', cat:'불완전골형성(Q78.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr148', type:'coderef', group:'특정기호 전체', code:'V184', cat:'치사성 수포성 표피박리증(Q81.1), 디스트로피성 수포성 표피박리증(Q81.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr149', type:'coderef', group:'특정기호 전체', code:'V185', cat:'주로 얼굴형태에 영향을 주는 선천기형증후군(골덴하 증후군 등:Q87.0)환자가 해당 상병 관련 진료를 받은 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr150', type:'coderef', group:'특정기호 전체', code:'V186', cat:'마르팡증후군(Q87.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr151', type:'coderef', group:'특정기호 전체', code:'V187', cat:'발작성 야간헤모글로빈뇨(D59.5) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr152', type:'coderef', group:'특정기호 전체', code:'V188', cat:'에반스 증후군(D69.3) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr153', type:'coderef', group:'특정기호 전체', code:'V189', cat:'인대사 및 인산분해효소 장애(E83.3) 환자가 해당 상병 관련 진료를 받은 당일  외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr154', type:'coderef', group:'특정기호 전체', code:'V190', cat:'진행성 핵상안근마비[스틸-리차드슨-올스제위스키](G23.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr155', type:'coderef', group:'특정기호 전체', code:'V191', cat:'뇌혈관질환자[별첨1]가 해당 상병의 치료를 위하여 [별첨1]에 해당하는 수술을 받은 경우 최대 30일', cond:'', rate:'', meal:'', note:''},
+  {id:'cr156', type:'coderef', group:'특정기호 전체', code:'V192', cat:'"심장질환가 해당 상병의 치료를 위하여 해당하는 수술 또는 약제투여를 받은경우 최대 30일/ 단,[별첨2]에 해당하는 상병 중 복잡 선천성 심기형질환자 또는 [별첨2]에 해당하는 수술 중 심장이식술을 받은 경우 최대 60일"', cond:'', rate:'', meal:'', note:''},
+  {id:'cr157', type:'coderef', group:'특정기호 전체', code:'V193', cat:'산정특례 대상으로 등록된 암환자가 등록일로부터 5년간 해당상병(C00~C97, D00~D09, D32~D33, D37~D48)으로 진료를 받은경우', cond:'', rate:'', meal:'', note:''},
+  {id:'cr158', type:'coderef', group:'특정기호 전체', code:'V194', cat:'등록 암환자가 등록일로부터 5년간 해당상병(C00~C97,D00~D09,D32~D33,D37~D48)으로 가정간호를 받은경우', cond:'', rate:'', meal:'', note:''},
+  {id:'cr159', type:'coderef', group:'특정기호 전체', code:'V201', cat:'노년성 황반변성(삼출성)(H35.31) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr160', type:'coderef', group:'특정기호 전체', code:'V202', cat:'원발성 폐동맥 고혈압(I27.0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr161', type:'coderef', group:'특정기호 전체', code:'V204', cat:'결절성 경화증(부르느뷰 병 등: Q85.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr162', type:'coderef', group:'특정기호 전체', code:'V205', cat:'5번 염색체 단완의 결손(Q93.4) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr163', type:'coderef', group:'특정기호 전체', code:'V207', cat:'활동성 구루병(E55.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr164', type:'coderef', group:'특정기호 전체', code:'V208', cat:'아급성 괴사성 뇌병증 [리이](G31.81)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr165', type:'coderef', group:'특정기호 전체', code:'V209', cat:'색소망막염 (H35.51), 스타르가르트병(H35.58), 레베르 선천성 흑암시(H35.59) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr166', type:'coderef', group:'특정기호 전체', code:'V210', cat:'낙엽천포창(L10.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr167', type:'coderef', group:'특정기호 전체', code:'V211', cat:'수포성 유사천포창(L12.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr168', type:'coderef', group:'특정기호 전체', code:'V212', cat:'흉터유사천포창(L12.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr169', type:'coderef', group:'특정기호 전체', code:'V213', cat:'뼈의 파젯병[변형성 골염](M88)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr170', type:'coderef', group:'특정기호 전체', code:'V214', cat:'무뇌이랑증, 큰뇌이랑증(경뇌회증) (Q04.3) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr171', type:'coderef', group:'특정기호 전체', code:'V215', cat:'필레증후군(Q78.5)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr172', type:'coderef', group:'특정기호 전체', code:'V216', cat:'포이츠-제거스 증후군, 스터지-베버(-디미트리) 증후군, 폰 히펠-린다우 증후군 (Q85.8)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr173', type:'coderef', group:'특정기호 전체', code:'V217', cat:'캐취22 증후군, 엔젤만 증후군, 스미스-마제니스 증후군, 윌리엄스 증후군(Q93.5) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr174', type:'coderef', group:'특정기호 전체', code:'V218', cat:'클라인펠터증후군 (Q98.0, Q98.1, Q98.2, Q98.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr175', type:'coderef', group:'특정기호 전체', code:'V219', cat:'용혈-요독증후군(D59.3)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr176', type:'coderef', group:'특정기호 전체', code:'V220', cat:'선천성 적혈구조혈이상빈혈(D64.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr177', type:'coderef', group:'특정기호 전체', code:'V221', cat:'레쉬-니한 증후군(E79.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr178', type:'coderef', group:'특정기호 전체', code:'V222', cat:'폐포단백질증(J84.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr179', type:'coderef', group:'특정기호 전체', code:'V223', cat:'혈청검사양성 류마티스관절염(M05)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr180', type:'coderef', group:'특정기호 전체', code:'V224', cat:'진행성 골화섬유형성이상(M61.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr181', type:'coderef', group:'특정기호 전체', code:'V225', cat:'단일심실(Q20.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr182', type:'coderef', group:'특정기호 전체', code:'V226', cat:'아이젠멘거 복합·아이젠멘거증후군(I27.8), 아이젠멘거결손(Q21.8)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr183', type:'coderef', group:'특정기호 전체', code:'V227', cat:'방광외반 (Q64.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr184', type:'coderef', group:'특정기호 전체', code:'V228', cat:'관상골 및 척추의 성장 결손을 동반한 골연골형성이상(Q77)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr185', type:'coderef', group:'특정기호 전체', code:'V229', cat:'골화석증 (Q78.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr186', type:'coderef', group:'특정기호 전체', code:'V230', cat:'내연골종증 (Q78.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr187', type:'coderef', group:'특정기호 전체', code:'V231', cat:'별표4에 의거 등록 희귀질환자가 등록일로부터 5년간 고시에서 정한 해당 상병으로 가정간호를 받은 경우, 단 상세불명 희귀질환은 등록일로부터 1년', cond:'', rate:'', meal:'', note:''},
+  {id:'cr188', type:'coderef', group:'특정기호 전체', code:'V232', cat:'지중해빈혈(D56)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr189', type:'coderef', group:'특정기호 전체', code:'V233', cat:'레녹스-가스토 증후군, 웨스트 증후군 (G40.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr190', type:'coderef', group:'특정기호 전체', code:'V234', cat:'발작수면 및 허탈발작 (G47.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr191', type:'coderef', group:'특정기호 전체', code:'V235', cat:'랑뒤-오슬러-웨버병 (I78.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr192', type:'coderef', group:'특정기호 전체', code:'V236', cat:'특발성 폐섬유증 (J84.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr193', type:'coderef', group:'특정기호 전체', code:'V237', cat:'건선성 및 장병성 관절병증 (M07.1~M07.3)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr194', type:'coderef', group:'특정기호 전체', code:'V238', cat:'현미경적 다발동맥염 (M31.7)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr195', type:'coderef', group:'특정기호 전체', code:'V239', cat:'댄디-워커 증후군 (Q03.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr196', type:'coderef', group:'특정기호 전체', code:'V240', cat:'분열뇌증 (Q04.6)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr197', type:'coderef', group:'특정기호 전체', code:'V241', cat:'무설증 (Q38.3)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr198', type:'coderef', group:'특정기호 전체', code:'V242', cat:'다발선천외골증 (Q78.6)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr199', type:'coderef', group:'특정기호 전체', code:'V243', cat:'루빈스타인-테이비 증후군, 홀트-오람 증후군, 클리펠-트레노우네이-베버 증후군, 손발톱무릎뼈 증후군, 바테르 증후군 (Q87.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr200', type:'coderef', group:'특정기호 전체', code:'V244', cat:'소토스 증후군, 위버 증후군 (Q87.3)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr201', type:'coderef', group:'특정기호 전체', code:'V245', cat:'취약X 증후군 (Q99.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr202', type:'coderef', group:'특정기호 전체', code:'V247', cat:'별첨 3에서 중증도 기준의 제1호 각 목의 어느 하나의 상병에 해당하면서 체표면적 기준의 제1호 각 목의 어느 하나에 해당하는 경우', cond:'', rate:'', meal:'', note:''},
+  {id:'cr203', type:'coderef', group:'특정기호 전체', code:'V248', cat:'별첨 3에서 중증도 기준의 제2호 각 목의 어느 하나의 상병에 해당하면서 체표면적 기준의 제2호 각 목의 어느 하나에 해당하는 경우', cond:'', rate:'', meal:'', note:''},
+  {id:'cr204', type:'coderef', group:'특정기호 전체', code:'V250', cat:'별첨 3의 상병 중 제4호에 해당하는 경우', cond:'', rate:'', meal:'', note:''},
+  {id:'cr205', type:'coderef', group:'특정기호 전체', code:'V251', cat:'등록 중증화상환자가 등록일로부터 1년간 고시에서 정한 해당 상병으로 가정간호를 받는 경우', cond:'', rate:'', meal:'', note:''},
+  {id:'cr206', type:'coderef', group:'특정기호 전체', code:'V252', cat:'본인일부부담금 산정특례에 관한 기준 제6조 관련 별표6 "약국 요양급여비용총액의 본인부담률 산정특례 대상"', cond:'', rate:'', meal:'', note:''},
+  {id:'cr207', type:'coderef', group:'특정기호 전체', code:'V253', cat:'항인지질 증후군(D68.6)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr208', type:'coderef', group:'특정기호 전체', code:'V254', cat:'바터 증후군(E26.8) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr209', type:'coderef', group:'특정기호 전체', code:'V255', cat:'혈색소증(E83.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr210', type:'coderef', group:'특정기호 전체', code:'V256', cat:'뇌전증에 동반된 후천성 실어증[란다우-클레프너](F80.3) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr211', type:'coderef', group:'특정기호 전체', code:'V257', cat:'할러포르덴-스파츠병(G23.0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr212', type:'coderef', group:'특정기호 전체', code:'V258', cat:'주기마비(가족성) 저칼륨혈성(G72.3) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr213', type:'coderef', group:'특정기호 전체', code:'V259', cat:'람베르트-이튼증후군(G73.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr214', type:'coderef', group:'특정기호 전체', code:'V260', cat:'코츠망막병증(H35.0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr215', type:'coderef', group:'특정기호 전체', code:'V261', cat:'컨스-세이어 증후군(H49.8) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr216', type:'coderef', group:'특정기호 전체', code:'V262', cat:'원발성 담관염, 경화성 담관염(K83.0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr217', type:'coderef', group:'특정기호 전체', code:'V263', cat:'선천성 신 증후군(N04) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr218', type:'coderef', group:'특정기호 전체', code:'V264', cat:'다낭성 신장, 보통염색체열성(Q61.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr219', type:'coderef', group:'특정기호 전체', code:'V265', cat:'두개골유합(Q75.0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr220', type:'coderef', group:'특정기호 전체', code:'V266', cat:'카무라티-엥겔만 증후군 (Q78.3) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr221', type:'coderef', group:'특정기호 전체', code:'V267', cat:'알포트 증후군, 로렌스-문(-바르데)-비들 증후군, 젤웨거 증후군, 촤지 증후군(Q87.8) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr222', type:'coderef', group:'특정기호 전체', code:'V268', cat:'중증 뇌출혈환자[별첨1의 I60~I62]가 급성기에 입원하여 진료를 받은 경우 최대 30일 /[별첨1]에 해당하는 수술을 받지 않은 경우', cond:'', rate:'', meal:'', note:''},
+  {id:'cr223', type:'coderef', group:'특정기호 전체', code:'V269', cat:'방실중격결손(Q21.2), 팔로네징후(Q21.3), 대동맥폐동맥중격결손(Q21.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr224', type:'coderef', group:'특정기호 전체', code:'V270', cat:'선천성 대동맥판협착(Q24.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr225', type:'coderef', group:'특정기호 전체', code:'V271', cat:'선천성 심장차단(Q24.6)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr226', type:'coderef', group:'특정기호 전체', code:'V272', cat:'대동맥의 축착(Q25.1), 대동맥의 폐쇄(Q25.2), 대동맥의 협착(Q25.3)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr227', type:'coderef', group:'특정기호 전체', code:'V273', cat:'손상중증도점수(ISS) 15점 이상에 해당하는 중증외상환자가 「응급의료에 관한 법률」제30조의2에 따른 권역외상센터에 입원하여 진료를 받은 경우 최대 30일', cond:'', rate:'', meal:'', note:''},
+  {id:'cr228', type:'coderef', group:'특정기호 전체', code:'V274', cat:'등록한 결핵질환자가 특례기간 동안 결핵질환으로 가정간호를 받는 경우, 별표5에 의거 등록한 잠복결핵감염자가 등록일로부터 1년간 잠복결핵감염으로 가정간호를 받는 경우', cond:'', rate:'', meal:'', note:''},
+  {id:'cr229', type:'coderef', group:'특정기호 전체', code:'V275', cat:'뇌혈관질환[별첨1]에서 I63에 해당하는 상병의 뇌경색증 환자가 증상 발생 24시간 이내에 병원에 도착하여 입원 진료 중 NIHSS가 5점 이상인 경우 최대 30일/[별첨1]에 해당하는 수술을 받지 않은 경우', cond:'', rate:'', meal:'', note:''},
+  {id:'cr230', type:'coderef', group:'특정기호 전체', code:'V276', cat:'시신경 척수염(데빅병) (G36.0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr231', type:'coderef', group:'특정기호 전체', code:'V277', cat:'폐 이식술 및 이와 직접 관련된 입원치료 및 외래진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr232', type:'coderef', group:'특정기호 전체', code:'V278', cat:'소장 이식술 및 이와 직접 관련된 입원치료 및 외래진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr233', type:'coderef', group:'특정기호 전체', code:'V279', cat:'중증 약물난치성 뇌전증(G40.01, G40.21, G40.31) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr234', type:'coderef', group:'특정기호 전체', code:'V280', cat:'중증 보통건선(L40.00) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr235', type:'coderef', group:'특정기호 전체', code:'V281', cat:'가족성선종성폴립증(D12.6, 신생물 형태분류 M8220/0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr236', type:'coderef', group:'특정기호 전체', code:'V282', cat:'도슨 봉입체뇌염, 아급성 경화성 범뇌염, 밴보게르트 경화성 백질뇌병증(A81.1), 진행성 다초점백질뇌병증, 다초점백질뇌병증NOS(A81.2), 중추신경계통의 기타 비정형바이러스감염, 쿠루(A81.8), 중추신경계통의 상세불명의 비정형바이러스감염, 중추신경계통의 프리온질환NOS(A81.9) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr237', type:'coderef', group:'특정기호 전체', code:'V283', cat:'약물유발 무형성빈혈(D61.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr238', type:'coderef', group:'특정기호 전체', code:'V284', cat:'혈우병 환자가 항응고인자？동결침전제제 등의 약제 및 기타 혈우병 치료를 받은 당일 외래진료 또는 해당 치료 관련 입원 진료 (후천성 응고인자결핍, 간질환에 의한 응고인자결핍(D68.4))', cond:'', rate:'', meal:'', note:''},
+  {id:'cr239', type:'coderef', group:'특정기호 전체', code:'V285', cat:'약물유발 호중구감소(D70) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr240', type:'coderef', group:'특정기호 전체', code:'V286', cat:'과당대사장애, 유전성 과당불내성, 과당-1, 6-이인산분해효소결핍(E74.1), 수크레이스결핍, 장성 탄수화물흡수의 기타 장애, 포도당-갈락토스흡수장애(E74.3) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr241', type:'coderef', group:'특정기호 전체', code:'V287', cat:'신생물딸림 신경근육병증 및 신경병증(G13.0), 신생물딸림 변연부뇌병증(C00-D48+)(G13.1), 달리 분류된 기타 질환에서 일차적으로 중추신경계통을 침범하는 계통적 위축(G13.8) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr242', type:'coderef', group:'특정기호 전체', code:'V288', cat:'독성근신경장애(G70.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr243', type:'coderef', group:'특정기호 전체', code:'V289', cat:'울혈성 심근병증(I42.0), 기타 비대성 심근병증(I42.28), 기타 제한성 심근병증(I42.5) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr244', type:'coderef', group:'특정기호 전체', code:'V290', cat:'과민성 혈관염(M31.0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr245', type:'coderef', group:'특정기호 전체', code:'V291', cat:'소이증(Q17.2), (외)이도의 선천성 결여, 폐쇄, 협착(Q16.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr246', type:'coderef', group:'특정기호 전체', code:'V292', cat:'선천성 다발관절만곡증(Q74.3) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr247', type:'coderef', group:'특정기호 전체', code:'V293', cat:'별표 4의2에 의거 등록 중증난치질환자가 등록일로부터 5년간 해당 상병으로 가정간호를 받은 경우', cond:'', rate:'', meal:'', note:''},
+  {id:'cr248', type:'coderef', group:'특정기호 전체', code:'V294', cat:'한랭글로불린혈증성 혈관염(D89.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr249', type:'coderef', group:'특정기호 전체', code:'V295', cat:'맥락막결손(H31.2) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr250', type:'coderef', group:'특정기호 전체', code:'V296', cat:'긴QT증후군(I49.82) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr251', type:'coderef', group:'특정기호 전체', code:'V297', cat:'유전성 출혈성 모세혈관 확장증(I78.0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr252', type:'coderef', group:'특정기호 전체', code:'V298', cat:'성인발병 스틸병(M06.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr253', type:'coderef', group:'특정기호 전체', code:'V299', cat:'수근반달뼈의 골연골증(연소성)[퀸뵉](M92.2), 성인의 퀸뵉병(M93.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr254', type:'coderef', group:'특정기호 전체', code:'V300', cat:'X-연관비늘증, X-연관비늘증; 스테로이드설파타제결핍(Q80.1), 할리퀸태아(Q80.4) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr255', type:'coderef', group:'특정기호 전체', code:'V301', cat:'연명의료결정법 제2조제6호각목에 의한 말기환자가 가정형 호스피스를 받은 경우(다만, 이미 산정특례 적용을 받고 있는 말기환자는 제외)', cond:'', rate:'', meal:'', note:''},
+  {id:'cr256', type:'coderef', group:'특정기호 전체', code:'V302', cat:'등록 암환자가 등록일로부터 5년간 해당 상병(C00~C97, D00~D09,D32~D33, D37~D48)으로 가정형 호스피스를 받은 경우', cond:'', rate:'', meal:'', note:''},
+  {id:'cr257', type:'coderef', group:'특정기호 전체', code:'V303', cat:'등록 희귀질환자 중 폐포단백질증(J84.0), 특발성 폐섬유증(J84.1), 원발성 담즙성 경변증(K74.3) 환자가 등록일로부터 5년간 해당 상병으로 가정형 호스피스를 받은 경우', cond:'', rate:'', meal:'', note:''},
+  {id:'cr258', type:'coderef', group:'특정기호 전체', code:'V304', cat:'중증난치질환자 중 인체면역결핍바이러스병(B20~B24) 환자가 5년간 해당 상병으로 가정형 호스피스를 받은 경우', cond:'', rate:'', meal:'', note:''},
+  {id:'cr259', type:'coderef', group:'특정기호 전체', code:'V305', cat:'해당하는 상병(기능 및 일상생활에 중요한 영향을 주는 경우에 한함)으로 입원진료를 받는 경우', cond:'', rate:'', meal:'', note:''},
+  {id:'cr260', type:'coderef', group:'특정기호 전체', code:'V306', cat:'해당하는 상병(기능 및 일상생활에 중요한 영향을 주는 경우에 한함)에 대해 외래진료를 받은 환자가 수상(受傷)한 날부터 3년 이내에 입원하여 별첨 3의 수술을 받는 경우', cond:'', rate:'', meal:'', note:''},
+  {id:'cr261', type:'coderef', group:'특정기호 전체', code:'V307', cat:'원추각막을 갖고 있는 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr262', type:'coderef', group:'특정기호 전체', code:'V308', cat:'중증 아토피성 피부염(L20.85) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr263', type:'coderef', group:'특정기호 전체', code:'V309', cat:'중증 화농성 한선염(L73.22)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr264', type:'coderef', group:'특정기호 전체', code:'V310', cat:'불완전상아질형성(K00.51) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr265', type:'coderef', group:'특정기호 전체', code:'V311', cat:'간질환에 의한 응고인자 결핍 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr266', type:'coderef', group:'특정기호 전체', code:'V312', cat:'가성 장 폐색(K56.0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr267', type:'coderef', group:'특정기호 전체', code:'V313', cat:'전신농포건선(L40.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr268', type:'coderef', group:'특정기호 전체', code:'V314', cat:'탄력섬유성 거짓황색종(Q82.8) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr269', type:'coderef', group:'특정기호 전체', code:'V315', cat:'이완불능증(K22.0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr270', type:'coderef', group:'특정기호 전체', code:'V352', cat:'약국 요양급여비용총액의 본인부담률 산정특례 대상', cond:'', rate:'', meal:'', note:''},
+  {id:'cr271', type:'coderef', group:'특정기호 전체', code:'V452', cat:'약국 요양급여비용총액의 본인부담률 산정특례 대상', cond:'', rate:'', meal:'', note:''},
+  {id:'cr272', type:'coderef', group:'특정기호 전체', code:'V800', cat:'치매관련 상병으로 등록하여 해당 상병 및 이와 직접 관련된 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr273', type:'coderef', group:'특정기호 전체', code:'V801', cat:'등록한 치매질환자가 등록일로부터 5년간 해당 상병으로 가정간호를 받은 경우', cond:'', rate:'', meal:'', note:''},
+  {id:'cr274', type:'coderef', group:'특정기호 전체', code:'V810', cat:'치매관련 상병으로 등록하여 다음 중 한 가지 상황 발생시, 해당 상병과 직접 관련된 외래진료 또는 입원진료를 받은 경우 등록일 기준 매년 최대 60일. 단, 의료법 제3조제2항제3호라목의 요양병원을 제외한 병원급 이상 의료기관에서 신경과 또는 정신과 전문의가 의료적으로 필요하다고 인정한 경우 60일 추가 인정', cond:'', rate:'', meal:'', note:''},
+  {id:'cr275', type:'coderef', group:'특정기호 전체', code:'V811', cat:'등록한 치매질환자가 제10조제1항에 의거 해당 상병으로 가정간호를 받은 경우', cond:'', rate:'', meal:'', note:''},
+  {id:'cr276', type:'coderef', group:'특정기호 전체', code:'V900', cat:'등록된 극희귀질환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr277', type:'coderef', group:'특정기호 전체', code:'V901', cat:'등록된 기타염색체이상질환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+  {id:'cr278', type:'coderef', group:'특정기호 전체', code:'V999', cat:'등록된 상세불명희귀질환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'', rate:'', meal:'', note:''},
+
+
+  {id:'sj1', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V000', cat:'해당 환자가 결핵질환 치료를 진료 받은 당일 외래진료 또는 입원진료에 대해 적용', cond:'결핵', rate:'', meal:'', note:'07~,08~'},
+  {id:'sj2', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V001', cat:'인공신장투석 실시 당일 외래진료 또는 해당 시술 관련 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj3', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V003', cat:'계속적 복막관류술 실시, 복막관류액 수령 당일 외래진료 또는 해당 시술 관련 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj4', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V005', cat:'신 이식술 및 이와 직접 관련된 입원치료 및 외래진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj5', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V009', cat:'혈우병 환자가 항응고인자· 동결침전제제 등의 약제 및 기타 혈우병치료를 받은 당일 외래진료 또는 해당 치료 관련 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj6', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V012', cat:'중증근무력증 및 기타 근신경장애(G70), 근육의 원발성 장애(G71) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj7', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V013', cat:'간 이식술 및 이와 직접 관련된 입원치료 및 외래진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj8', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V014', cat:'췌장 이식술 및 이와 직접 관련된 입원치료 및 외래진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj9', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V015', cat:'심장 이식술 및 이와 직접 관련된 입원치료 및 외래진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj10', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V021', cat:'터너증후군(Q96) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj11', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V022', cat:'다발성 경화증(G35) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj12', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V023', cat:'후천성 순수적혈구무형성[적모구감소](D60), 기타 무형성빈혈(D61)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj13', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V102', cat:'중추신경계통의 비정형바이러스감염(A81)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj14', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V103', cat:'인체면역결핍바이러스병(B20~B24)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj15', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V106', cat:'정성적 혈소판결손(D69.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj16', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V108', cat:'선천성 무과립구증, 선천성 호중구 감소, 영아 유전성 무과립구증, 무과립구증, 무과립구성 안지나, 호중구감소 NOS, 주기성 호중구감소, 코스트만병, 순환성 호중구감소, 호중구감소성 비장비대, 베르너-슐츠병(D70)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj17', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V109', cat:'다형핵호중구의 기능장애(D71)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj18', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V110', cat:'림프세망 및 세망조직구 조직의 참여를 동반한 기타 명시된 질환(D76.1,D76.2,D76.3)환자가 해당 상병 관련 진료를 받은 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj19', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V111', cat:'면역결핍증 및 사르코이드증(D80~D84, D86)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj20', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V112', cat:'말단비대증 및 뇌하수체거인증(E22.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj21', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V114', cat:'쿠싱증후군(E24)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj22', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V115', cat:'부신생식기장애(E25)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj23', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V116', cat:'부신의 기타장애(E27.1, E27.2, E27.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj24', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V117', cat:'대사장애(E70~E77)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj25', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V118', cat:'기타 포르피린증(E80.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj26', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V119', cat:'구리대사장애(윌슨병 등: E83.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj27', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V120', cat:'낭성섬유증(E84)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj28', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V121', cat:'아밀로이드증(E85)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj29', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V122', cat:'레트 증후군(F84.2), 카다실(F01.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj30', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V123', cat:'일차적으로 중추신경계통에 영향을 주는 계통성 위축(G10~G13)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료(G12.28은 제외)', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj31', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V124', cat:'파킨슨병(G20)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj32', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V125', cat:'뇌전증지속상태(G41)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj33', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V126', cat:'염증성 다발 신경병증(G61)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj34', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V127', cat:'심근병증 (I42.0~I42.5)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj35', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V128', cat:'모야모야병(I67.5)환자가 해당상병으로 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj36', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V129', cat:'폐색혈전혈관염[버거병](I73.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj37', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V130', cat:'크론병[국소성 장염](K50)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj38', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V131', cat:'궤양성 대장염(K51)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj39', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V132', cat:'보통 천포창(L10.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj40', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V133', cat:'연소성 관절염(M08.0~M08.3)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj41', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V134', cat:'결절성 다발 동맥염 및 관련 병태(M30.0~M30.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj42', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V135', cat:'기타 괴사성 혈관병증(M31.0~M31.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj43', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V136', cat:'전신홍반루프스(M32.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj44', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V137', cat:'피부다발근염(M33)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj45', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V138', cat:'전신경화증(M34)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj46', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V139', cat:'결합조직의 기타 전신침범(M35.0~M35.7)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj47', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V140', cat:'강직척추염(M45)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj48', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V141', cat:'신장성 요붕증(N25.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj49', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V142', cat:'신생아의 호흡곤란(P22)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj50', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V143', cat:'아놀드-키아리증후군(Q07.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj51', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V144', cat:'심장방실 및 연결의 선천기형(Q20.0~Q20.3, Q20.5)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj52', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V145', cat:'폐동맥판 폐쇄(Q22.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj53', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V146', cat:'삼첨판 폐쇄(Q22.4), 에브스타인이상(Q22.5), 형성저하성 우심증후군(Q22.6)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj54', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V147', cat:'대동맥판 및 승모판의 선천 기형(Q23)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj55', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V148', cat:'관상동맥혈관의 기형(Q24.5)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj56', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V149', cat:'폐동맥의 폐쇄(Q25.5)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj57', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V150', cat:'대정맥혈관의 선천기형(Q26.0~Q26.6)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj58', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V151', cat:'두개안면골이골증(크루존병:Q75.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj59', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V154', cat:'다골성 섬유성 형성이상 (Q78.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj60', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V155', cat:'달리 분류되지 않은 근골격계통의 선천기형(Q79)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj61', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V156', cat:'신경섬유종증(비악성 : 폰 렉클링하우젠병 :Q85.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj62', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V157', cat:'(이상형태성)태아알코올증후군(Q86.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj63', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V158', cat:'주로 단신과 관련된 선천기형 증후군(프라더-윌리증후군 등 :Q87.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj64', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V159', cat:'다운증후군(Q90)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj65', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V160', cat:'에드워즈 증후군 및 파타우 증후군(Q91)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj66', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V161', cat:'정신질환자가 해당상병(F20~F29)으로 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj67', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V162', cat:'뇌하수체의 양성신생물(D35.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj68', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V163', cat:'포도당-6-인산탈수소효소결핍에 의한 빈혈(D55.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj69', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V164', cat:'해당 효소의 장애에 의한 빈혈(D55.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj70', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V165', cat:'콜만증후군, 쉬한 증후군(E23.0)환자가 해당 상병 관련 진료를 받은 당일  외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj71', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V166', cat:'기타 명시된 내분비장애(E34.8) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj72', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V167', cat:'멜커슨증후군(멜케르손-로젠탈 증후군:G51.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj73', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V168', cat:'복합부위통증증후군 Ⅱ형(G90.6) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj74', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V169', cat:'유전성 운동 및 감각 신경병증(샤르코-마리-치아질환등:G60.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj75', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V170', cat:'달리분류된 감염성 및 기생충성 질환에서의 다발 신경병증(G63.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj76', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V172', cat:'척수공동증 및 연수공동증(G95.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj77', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V173', cat:'버드-키아리 증후군(I82.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj78', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V174', cat:'원발성 담즙성 경변증(K74.3)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj79', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V175', cat:'자가면역성 간염(K75.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj80', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V176', cat:'후천성 수포성 표피박리증(L12.3)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj81', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V177', cat:'복합부위통증증후군 Ⅰ형(G90.5)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj82', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V178', cat:'재발성 다발 연골염(M94.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj83', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V179', cat:'이분척추 (Q05)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj84', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V180', cat:'척수이개증(Q06.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj85', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V181', cat:'담관의 폐쇄(Q44.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj86', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V182', cat:'하악안면골이골증(Q75.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj87', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V183', cat:'불완전골형성(Q78.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj88', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V184', cat:'치사성 수포성 표피박리증(Q81.1), 디스트로피성 수포성 표피박리증(Q81.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj89', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V185', cat:'주로 얼굴형태에 영향을 주는 선천기형증후군(골덴하 증후군 등:Q87.0)환자가 해당 상병 관련 진료를 받은 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj90', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V186', cat:'마르팡증후군(Q87.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj91', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V187', cat:'발작성 야간헤모글로빈뇨(D59.5) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj92', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V188', cat:'에반스 증후군(D69.3) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj93', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V189', cat:'인대사 및 인산분해효소 장애(E83.3) 환자가 해당 상병 관련 진료를 받은 당일  외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj94', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V190', cat:'진행성 핵상안근마비[스틸-리차드슨-올스제위스키](G23.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj95', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V191', cat:'뇌혈관질환자[별첨1]가 해당 상병의 치료를 위하여 [별첨1]에 해당하는 수술을 받은 경우 최대 30일', cond:'뇌혈관', rate:'', meal:'', note:'-'},
+  {id:'sj96', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V192', cat:'"심장질환가 해당 상병의 치료를 위하여 해당하는 수술 또는 약제투여를 받은경우 최대 30일/', cond:'심장질환', rate:'', meal:'', note:'-'},
+  {id:'sj97', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V193', cat:'정특례 대상으로 등록된 암환자가 등록일로부터 5년간 해당상병(C00~C97, D00~D09, D32~D33, D37~D48)으로 진료를 받은경우', cond:'중증', rate:'', meal:'', note:'01~'},
+  {id:'sj98', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V194', cat:'등록 암환자가 등록일로부터 5년간 해당상병(C00~C97,D00~D09,D32~D33,D37~D48)으로 가정간호를 받은경우', cond:'중증', rate:'', meal:'', note:'01~'},
+  {id:'sj99', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V201', cat:'노년성 황반변성(삼출성)(H35.31) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj100', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V202', cat:'원발성 폐동맥 고혈압(I27.0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj101', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V204', cat:'결절성 경화증(부르느뷰 병 등: Q85.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj102', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V205', cat:'5번 염색체 단완의 결손(Q93.4) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj103', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V207', cat:'활동성 구루병(E55.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj104', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V208', cat:'아급성 괴사성 뇌병증 [리이](G31.81)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj105', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V209', cat:'색소망막염 (H35.51), 스타르가르트병(H35.58), 레베르 선천성 흑암시(H35.59) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj106', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V210', cat:'낙엽천포창(L10.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj107', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V211', cat:'수포성 유사천포창(L12.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj108', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V212', cat:'흉터유사천포창(L12.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj109', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V213', cat:'뼈의 파젯병[변형성 골염](M88)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj110', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V214', cat:'무뇌이랑증, 큰뇌이랑증(경뇌회증) (Q04.3) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj111', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V215', cat:'필레증후군(Q78.5)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj112', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V216', cat:'포이츠-제거스 증후군, 스터지-베버(-디미트리) 증후군, 폰 히펠-린다우 증후군 (Q85.8)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj113', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V217', cat:'캐취22 증후군, 엔젤만 증후군, 스미스-마제니스 증후군, 윌리엄스 증후군(Q93.5) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj114', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V218', cat:'클라인펠터증후군 (Q98.0, Q98.1, Q98.2, Q98.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj115', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V219', cat:'용혈-요독증후군(D59.3)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj116', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V220', cat:'선천성 적혈구조혈이상빈혈(D64.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj117', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V221', cat:'레쉬-니한 증후군(E79.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj118', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V222', cat:'폐포단백질증(J84.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj119', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V223', cat:'혈청검사양성 류마티스관절염(M05)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj120', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V224', cat:'진행성 골화섬유형성이상(M61.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj121', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V225', cat:'단일심실(Q20.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj122', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V226', cat:'아이젠멘거 복합·아이젠멘거증후군(I27.8), 아이젠멘거결손(Q21.8)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj123', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V227', cat:'방광외반 (Q64.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj124', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V228', cat:'관상골 및 척추의 성장 결손을 동반한 골연골형성이상(Q77)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj125', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V229', cat:'골화석증 (Q78.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj126', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V230', cat:'내연골종증 (Q78.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj127', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V231', cat:'별표4에 의거 등록 희귀질환자가 등록일로부터 5년간 고시에서 정한 해당 상병으로 가정간호를 받은 경우, 단 상세불명 희귀질환은 등록일로부터 1년', cond:'희귀/중증희귀', rate:'', meal:'', note:'05~,21~,23~'},
+  {id:'sj128', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V232', cat:'지중해빈혈(D56)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj129', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V233', cat:'레녹스-가스토 증후군, 웨스트 증후군 (G40.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj130', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V234', cat:'발작수면 및 허탈발작 (G47.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj131', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V235', cat:'랑뒤-오슬러-웨버병 (I78.0)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj132', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V236', cat:'특발성 폐섬유증 (J84.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj133', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V237', cat:'건선성 및 장병성 관절병증 (M07.1~M07.3)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj134', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V238', cat:'현미경적 다발동맥염 (M31.7)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj135', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V239', cat:'댄디-워커 증후군 (Q03.1)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj136', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V240', cat:'분열뇌증 (Q04.6)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj137', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V241', cat:'무설증 (Q38.3)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj138', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V242', cat:'다발선천외골증 (Q78.6)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj139', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V243', cat:'루빈스타인-테이비 증후군, 홀트-오람 증후군, 클리펠-트레노우네이-베버 증후군, 손발톱무릎뼈 증후군, 바테르 증후군 (Q87.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj140', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V244', cat:'소토스 증후군, 위버 증후군 (Q87.3)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj141', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V245', cat:'취약X 증후군 (Q99.2)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj142', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V247', cat:'별첨 3에서 중증도 기준의 제1호 각 목의 어느 하나의 상병에 해당하면서 체표면적 기준의 제1호 각 목의 어느 하나에 해당하는 경우', cond:'중증화상', rate:'', meal:'', note:'09~'},
+  {id:'sj143', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V248', cat:'별첨 3에서 중증도 기준의 제2호 각 목의 어느 하나의 상병에 해당하면서 체표면적 기준의 제2호 각 목의 어느 하나에 해당하는 경우', cond:'중증화상', rate:'', meal:'', note:'09~'},
+  {id:'sj144', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V250', cat:'별첨 3의 상병 중 제4호에 해당하는 경우', cond:'중증화상', rate:'', meal:'', note:'09~'},
+  {id:'sj145', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V251', cat:'등록 중증화상환자가 등록일로부터 1년간 고시에서 정한 해당 상병으로 가정간호를 받는 경우', cond:'중증화상', rate:'', meal:'', note:'09~'},
+  {id:'sj146', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V253', cat:'항인지질 증후군(D68.6)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj147', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V254', cat:'바터 증후군(E26.8) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj148', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V255', cat:'혈색소증(E83.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj149', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V256', cat:'뇌전증에 동반된 후천성 실어증[란다우-클레프너](F80.3) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj150', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V257', cat:'할러포르덴-스파츠병(G23.0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj151', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V258', cat:'주기마비(가족성) 저칼륨혈성(G72.3) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj152', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V259', cat:'람베르트-이튼증후군(G73.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj153', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V260', cat:'코츠망막병증(H35.0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj154', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V261', cat:'컨스-세이어 증후군(H49.8) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj155', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V262', cat:'원발성 담관염, 경화성 담관염(K83.0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj156', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V263', cat:'선천성 신 증후군(N04) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj157', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V264', cat:'다낭성 신장, 보통염색체열성(Q61.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj158', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V265', cat:'두개골유합(Q75.0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj159', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V266', cat:'카무라티-엥겔만 증후군 (Q78.3) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj160', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V267', cat:'알포트 증후군, 로렌스-문(-바르데)-비들 증후군, 젤웨거 증후군, 촤지 증후군(Q87.8) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj161', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V268', cat:'중증 뇌출혈환자[별첨1의 I60~I62]가 급성기에 입원하여 진료를 받은 경우 최대 30일 /[별첨1]에 해당하는 수술을 받지 않은 경우', cond:'뇌혈관', rate:'', meal:'', note:'-'},
+  {id:'sj162', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V269', cat:'방실중격결손(Q21.2), 팔로네징후(Q21.3), 대동맥폐동맥중격결손(Q21.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj163', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V270', cat:'선천성 대동맥판협착(Q24.4)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj164', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V271', cat:'선천성 심장차단(Q24.6)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj165', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V272', cat:'대동맥의 축착(Q25.1), 대동맥의 폐쇄(Q25.2), 대동맥의 협착(Q25.3)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj166', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V274', cat:'등록한 결핵질환자가 특례기간 동안 결핵질환으로 가정간호를 받는 경우, 별표5에 의거 등록한 잠복결핵감염자가 등록일로부터 1년간 잠복결핵감염으로 가정간호를 받는 경우', cond:'결핵', rate:'', meal:'', note:'07~,08~'},
+  {id:'sj167', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V275', cat:'뇌혈관질환[별첨1]에서 I63에 해당하는 상병의 뇌경색증 환자가 증상 발생 24시간 이내에 병원에 도착하여 입원 진료 중 NIHSS가 5점 이상인 경우 최대 30일/[별첨1]에 해당하는 수술을 받지 않은 경우', cond:'뇌혈관', rate:'', meal:'', note:'-'},
+  {id:'sj168', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V276', cat:'시신경 척수염(데빅병) (G36.0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj169', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V277', cat:'폐 이식술 및 이와 직접 관련된 입원치료 및 외래진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj170', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V278', cat:'소장 이식술 및 이와 직접 관련된 입원치료 및 외래진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj171', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V279', cat:'중증 약물난치성 뇌전증(G40.01, G40.21, G40.31) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj172', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V280', cat:'중증 보통건선(L40.00) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj173', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V281', cat:'가족성선종성폴립증(D12.6, 신생물 형태분류 M8220/0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj174', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V282', cat:'도슨 봉입체뇌염, 아급성 경화성 범뇌염, 밴보게르트 경화성 백질뇌병증(A81.1), 진행성 다초점백질뇌병증, 다초점백질뇌병증NOS(A81.2), 중추신경계통의 기타 비정형바이러스감염, 쿠루(A81.8), 중추신경계통의 상세불명의 비정형바이러스감염, 중추신경계통의 프리온질환NOS(A81.9) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj175', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V283', cat:'약물유발 무형성빈혈(D61.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj176', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V284', cat:'혈우병 환자가 항응고인자？동결침전제제 등의 약제 및 기타 혈우병 치료를 받은 당일 외래진료 또는 해당 치료 관련 입원 진료 (후천성 응고인자결핍, 간질환에 의한 응고인자결핍(D68.4))', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj177', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V285', cat:'약물유발 호중구감소(D70) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj178', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V286', cat:'과당대사장애, 유전성 과당불내성, 과당-1, 6-이인산분해효소결핍(E74.1), 수크레이스결핍, 장성 탄수화물흡수의 기타 장애, 포도당-갈락토스흡수장애(E74.3) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj179', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V287', cat:'신생물딸림 신경근육병증 및 신경병증(G13.0), 신생물딸림 변연부뇌병증(C00-D48+)(G13.1), 달리 분류된 기타 질환에서 일차적으로 중추신경계통을 침범하는 계통적 위축(G13.8) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj180', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V288', cat:'독성근신경장애(G70.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj181', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V289', cat:'울혈성 심근병증(I42.0), 기타 비대성 심근병증(I42.28), 기타 제한성 심근병증(I42.5) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj182', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V290', cat:'과민성 혈관염(M31.0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj183', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V291', cat:'소이증(Q17.2), (외)이도의 선천성 결여, 폐쇄, 협착(Q16.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj184', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V292', cat:'선천성 다발관절만곡증(Q74.3) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj185', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V293', cat:'별표 4의2에 의거 등록 중증난치질환자가 등록일로부터 5년간 해당 상병으로 가정간호를 받은 경우', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj186', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V294', cat:'한랭글로불린혈증성 혈관염(D89.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj187', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V295', cat:'맥락막결손(H31.2) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj188', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V296', cat:'긴QT증후군(I49.82) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj189', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V297', cat:'유전성 출혈성 모세혈관 확장증(I78.0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj190', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V298', cat:'성인발병 스틸병(M06.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj191', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V299', cat:'수근반달뼈의 골연골증(연소성)[퀸뵉](M92.2), 성인의 퀸뵉병(M93.1) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj192', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V300', cat:'X-연관비늘증, X-연관비늘증; 스테로이드설파타제결핍(Q80.1), 할리퀸태아(Q80.4) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj193', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V302', cat:'등록 암환자가 등록일로부터 5년간 해당 상병(C00~C97, D00~D09,D32~D33, D37~D48)으로 가정형 호스피스를 받은 경우', cond:'중증', rate:'', meal:'', note:'01~'},
+  {id:'sj194', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V303', cat:'등록 희귀질환자 중 폐포단백질증(J84.0), 특발성 폐섬유증(J84.1), 원발성 담즙성 경변증(K74.3) 환자가 등록일로부터 5년간 해당 상병으로 가정형 호스피스를 받은 경우', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj195', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V304', cat:'중증난치질환자 중 인체면역결핍바이러스병(B20~B24) 환자가 5년간 해당 상병으로 가정형 호스피스를 받은 경우', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj196', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V307', cat:'원추각막을 갖고 있는 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj197', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V308', cat:'중증 아토피성 피부염(L20.85) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'중증난치', rate:'', meal:'', note:'05~,23~'},
+  {id:'sj198', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V309', cat:'중증 화농성 한선염(L73.22)환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj199', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V312', cat:'가성 장 폐색(K56.0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj200', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V313', cat:'전신농포건선(L40.1,L40,3) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj201', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V314', cat:'탄력섬유성 거짓황색종(Q82.8) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj202', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V315', cat:'이완불능증(K22.0) 환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'희귀질환', rate:'', meal:'', note:'05~,21~'},
+  {id:'sj203', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V800', cat:'치매관련 상병으로 등록하여 해당 상병 및 이와 직접 관련된 외래진료 또는 입원진료', cond:'중증치매', rate:'', meal:'', note:'15~'},
+  {id:'sj204', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V801', cat:'등록한 치매질환자가 등록일로부터 5년간 해당 상병으로 가정간호를 받은 경우', cond:'중증치매', rate:'', meal:'', note:'15~'},
+  {id:'sj205', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V810', cat:'치매관련 상병으로 등록하여 다음 중 한 가지 상황 발생시, 해당 상병과 직접 관련된 외래진료 또는 입원진료를 받은 경우 등록일 기준 매년 최대 60일. 단, 의료법 제3조제2항제3호라목의 요양병원을 제외한 병원급 이상 의료기관에서 신경과 또는 정신과 전문의가 의료적으로 필요하다고 인정한 경우 60일 추가 인정', cond:'중증치매', rate:'', meal:'', note:'15~'},
+  {id:'sj206', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V811', cat:'등록한 치매질환자가 제10조제1항에 의거 해당 상병으로 가정간호를 받은 경우', cond:'중증치매', rate:'', meal:'', note:'15~'},
+  {id:'sj207', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V900', cat:'등록된 극희귀질환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'극희귀', rate:'', meal:'', note:'11~'},
+  {id:'sj208', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V901', cat:'등록된 기타염색체이상질환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'기타염색체이상질환', rate:'', meal:'', note:'14~'},
+  {id:'sj209', type:'sanjeong', group:'산정특례 등록번호 전체', code:'V999', cat:'등록된 상세불명희귀질환자가 해당 상병 관련 진료를 받은 당일 외래진료 또는 입원진료', cond:'상세불명희귀질환', rate:'', meal:'', note:'13~'},
+];
+
+const MEDICAID_BASE = {
+  title:'의료급여 입원 본인부담률(식대 제외)',
+  sub:'제1·2·3차 의료급여기관 기준. 2종 장애인은 장애인의료비에서 지원',
+  headers:['의료급여기관','1종 수급권자','2종 수급권자 · 일반','2종 수급권자 · 장애인'],
+  rows:[
+    ['제1·2·3차 의료급여기관','무료','요양급여비용총액의 10%','무료(장애인 의료비)'],
+  ]
+};
+
+const MEDICAID_OUTPATIENT_BASE = {
+  title:'의료급여 외래 본인부담률 및 부담액 — 의원(보건의료원), 제1차 의료급여기관',
+  sub:'2종 장애인 부담액은 일반의 25% 수준으로 경감 적용',
+  headers:['항목','1종 수급권자','2종 수급권자 · 일반','2종 수급권자 · 장애인'],
+  rows:[
+    ['그 밖의 외래진료','1,000원','1,000원','250원'],
+    ['원내 직접조제','1,500원','1,500원','750원'],
+    ['CT, MRI, PET','5%','15%','15%'],
+  ]
+};
+
+const SPECIAL_BASE = {
+  title:'차상위1종(공상등구분:C) · 차상위 희귀질환 및 중증난치질환 또는 중증질환 본인부담경감대상자',
+  sub:'입원 · 외래 공통 적용',
+  headers:['요양급여종별','본인일부부담률 및 부담액'],
+  rows:[['전종별','0원 (※ 특정항목에 따른 본인부담금만 부담)']]
+};
+
+const SPECIAL2_TABLE = {
+  title:'차상위2종(공상등구분:E)·차상위2종 장애인(공상등구분:F) · 만성질환·18세미만 본인부담경감대상자 — 입원',
+  sub:'※ 장애인(F): 본인일부부담금을 장애인의료비에서 부담. 단, 주요 특정 항목 관련 본인일부부담금은 장애인의료비 미지원',
+  headers:['구분','요양급여비용총액','격리입원료'],
+  rows3:[
+    ['일반','요양급여비용총액의 14%','해당 비용의 5%'],
+    ['정신건강의학과 입원진료, 등록희귀·중증난치질환자','요양급여비용총액의 10%','해당 비용의 5%'],
+    ['중증질환자, 고위험임신부, 치매','요양급여비용총액의 5%','해당 비용의 5%'],
+    ['16~18세 치아홈메우기','해당 비용의 5% + 나머지 요양급여비용의 14%','해당 비용의 5%'],
+    ['6~15세','요양급여비용총액의 3%','해당 비용의 3%'],
+    ['자연분만, 6세미만, 제왕절개분만, 장기 등 기증자의 장기등 적출, 중증질환자 중 특정기호(V191,V192,V268,V273,V275) 환자, 산정특례 결핵질환자 및 잠복결핵 감염자','요양급여비용총액의 0%','0%'],
+  ]
+};
+
+const SPECIAL2_OUTPATIENT_TABLE = {
+  title:'차상위2종(E)·차상위2종 장애인(F) · 만성질환·18세미만 본인부담경감대상자 — 외래 (의원·치과의원·한의원·보건의료원)',
+  sub:'※ 장애인(F): 정액 본인일부부담금(1,500원/1,000원) 중 750원만 장애인의료비에서 지원. 특수장비 및 주요 특정 항목 관련 본인일부부담금은 장애인의료비 미지원',
+  headers:['구분','본인일부부담률 및 부담액'],
+  rows:[
+    ['일반','정액(직접조제: 1,500원 / 직접조제 이외: 1,000원) + 특수장비 14%'],
+    ['중증질환자, 임신부, 조산아·저체중아, 치매','정액(직접조제: 1,500원 / 직접조제 이외: 1,000원) + 특수장비 5%'],
+    ['1세미만','0원 + 특수장비 5%'],
+    ['희귀·중증난치질환자','정액(직접조제: 1,500원 / 직접조제 이외: 1,000원) + 특수장비 10%'],
+    ['중증질환자 중 특정기호 V191, V192 환자, 산정특례 결핵질환자 및 잠복결핵 감염자, 건강검진 확진 의료비 지원','요양급여비용총액의 0%'],
+    ['중증 가정간호, 가정형호스피스','요양급여비용총액의 5%'],
+  ]
+};
+
+const BRACKET_TABLES = {
+  age65_1: {
+    title:'65세 이상 · ① 의원·치과의원(의약분업예외지역 제외) 및 보건의료원(한방과 제외)',
+    sub:'끝수계산: 100원 미만 절사',
+    rows:[
+      ['15,000원 이하','1,500원'],
+      ['15,000원 초과 ~ 20,000원 이하','요양급여비용총액의 10%'],
+      ['20,000원 초과 ~ 25,000원 이하','요양급여비용총액의 20%'],
+      ['25,000원 초과','요양급여비용총액의 30%'],
+    ]
+  },
+  age65_2a: {
+    title:'65세 이상 · ② 의원·치과의원(의약분업예외지역만 해당)/보건의료원(한방과)/한의원 — 투약처방을 하는 경우',
+    sub:'끝수계산: 100원 미만 절사',
+    rows:[
+      ['15,000원 이하','1,500원'],
+      ['15,000원 초과 ~ 25,000원 이하','요양급여비용총액의 10%'],
+      ['25,000원 초과 ~ 30,000원 이하','요양급여비용총액의 20%'],
+      ['30,000원 초과','요양급여비용총액의 30%'],
+    ]
+  },
+  age65_2b: {
+    title:'65세 이상 · ② 의원·치과의원(의약분업예외지역만 해당)/보건의료원(한방과)/한의원 — 투약처방을 하지 않는 경우',
+    sub:'끝수계산: 100원 미만 절사',
+    rows:[
+      ['15,000원 이하','1,500원'],
+      ['15,000원 초과 ~ 20,000원 이하','요양급여비용총액의 10%'],
+      ['20,000원 초과 ~ 25,000원 이하','요양급여비용총액의 20%'],
+      ['25,000원 초과','요양급여비용총액의 30%'],
+    ]
+  },
+  under65: {
+    title:'65세 미만 · 환자구분별 본인부담률',
+    sub:'끝수계산: 100원 미만 절사',
+    cols:['환자구분','구분','본인일부부담률 및 부담액'],
+    rows3:[
+      ['일반환자','일반','요양급여비용총액의 30%'],
+      ['일반환자','임신부','요양급여비용총액의 10%'],
+      ['일반환자','1세 미만','요양급여비용총액의 5%'],
+      ['의약분업 예외환자','일반','약값 총액의 30% + 나머지 요양급여비용의 30%'],
+      ['의약분업 예외환자','임신부','약값 총액의 30% + 나머지 요양급여비용의 10%'],
+      ['의약분업 예외환자','1세 미만','약값 총액의 21% + 나머지 요양급여비용의 5%'],
+    ]
+  }
+};
+
+let items = [];
+let activeTab = 'inpatient';
+let activeGroup = '전체';
+let activeAge = '65세 이상';
+let activeSpecial = '차상위1종';
+let activeCare = '입원';
+let editingId = null;
+let editingType = 'inpatient';
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+async function loadItems(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, true);
+    if(res && res.value){
+      items = JSON.parse(res.value);
+    } else {
+      items = DEFAULT_DATA.slice();
+      await persist();
+    }
+  }catch(e){
+    items = DEFAULT_DATA.slice();
+  }
+  render();
+}
+
+async function persist(){
+  try{
+    await window.storage.set(STORAGE_KEY, JSON.stringify(items), true);
+  }catch(e){
+    toast('저장에 실패했습니다. 다시 시도해 주세요.');
+  }
+}
+
+function switchTab(tab){
+  activeTab = tab;
+  activeGroup = '전체';
+  document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.getElementById('pageTitle').textContent = '의원급 본인부담율 조회 — ' + TAB_LABEL[tab];
+  document.getElementById('pageDesc').textContent = TAB_DESC[tab];
+  document.getElementById('ageChipsWrap').style.display = tab==='outpatient' ? 'flex' : 'none';
+  document.getElementById('specialChipsWrap').style.display = tab==='special' ? 'flex' : 'none';
+  render();
+}
+
+function renderSpecialChips(){
+  const el = document.getElementById('specialChipsWrap');
+  const types = ['차상위1종','차상위2종'];
+  el.innerHTML = types.map(t=>`<button class="chip ${t===activeSpecial?'active':''}" data-sp="${t}">${t}</button>`).join('');
+  el.querySelectorAll('.chip').forEach(c=>{
+    c.addEventListener('click', ()=>{ activeSpecial = c.dataset.sp; render(); });
+  });
+}
+
+function renderCareChips(){
+  const el = document.getElementById('careChipsWrap');
+  const cares = ['입원','외래'];
+  el.innerHTML = cares.map(c=>`<button class="chip ${c===activeCare?'active':''}" data-care="${c}">${c}</button>`).join('');
+  el.querySelectorAll('.chip').forEach(b=>{
+    b.addEventListener('click', ()=>{ activeCare = b.dataset.care; render(); });
+  });
+}
+
+function renderAgeChips(){
+  const el = document.getElementById('ageChipsWrap');
+  const ages = ['65세 이상','65세 미만'];
+  el.innerHTML = ages.map(a=>`<button class="chip ${a===activeAge?'active':''}" data-age="${a}">${a}</button>`).join('');
+  el.querySelectorAll('.chip').forEach(c=>{
+    c.addEventListener('click', ()=>{ activeAge = c.dataset.age; render(); });
+  });
+}
+
+function renderGroupChips(){
+  const el = document.getElementById('filterChips');
+  let groups = GROUP_DEFS[activeTab];
+  if(activeTab==='outpatient'){
+    groups = activeAge==='65세 이상'
+      ? ['외래 특정 항목(65세 이상)','외래 일반 항목']
+      : ['외래 특정 항목(65세 미만)','외래 일반 항목'];
+  }
+  if(activeTab==='special'){
+    groups = activeSpecial==='차상위1종' ? ['차상위1종 특정 항목'] : (activeCare==='입원' ? ['차상위2종 특정 항목(입원)'] : ['차상위2종 특정 항목(외래)']);
+  }
+  if(activeTab==='medicaid'){
+    groups = activeCare==='입원'
+      ? ['의료급여 특정 항목(입원)','의료급여 특정기호(입원)']
+      : ['의료급여 외래 특정 항목(외래)'];
+  }
+  const all = ['전체', ...groups];
+  el.innerHTML = all.map(g=>`<button class="chip ${g===activeGroup?'active':''}" data-g="${g}">${g}</button>`).join('');
+  el.querySelectorAll('.chip').forEach(c=>{
+    c.addEventListener('click', ()=>{ activeGroup = c.dataset.g; render(); });
+  });
+}
+
+function renderBracketTable(t){
+  const headers = t.headers || t.cols;
+  const rows = t.rows3 || t.rows;
+  const head = `<tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr>`;
+  const body = rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('');
+  return `<div class="rate-table-wrap">
+    <div class="rate-table-title">${t.title}</div>
+    <table class="rate-table"><thead>${head}</thead><tbody>${body}</tbody></table>
+    <div class="foot-note">${t.sub}</div>
+  </div>`;
+}
+
+function renderCodeTables(){
+  const codeItems = items.filter(it=>it.type==='medicaid' && it.group==='의료급여 외래 부담면제·선택기관 코드(외래)');
+  const mRows = codeItems.filter(it=>it.code && it.code.startsWith('M'))
+    .sort((a,b)=>a.code.localeCompare(b.code))
+    .map(it=>[it.code, escapeHtml(it.cat), escapeHtml(it.rate), escapeHtml(it.note||'')]);
+  const bRows = codeItems.filter(it=>it.code && it.code.startsWith('B'))
+    .sort((a,b)=>a.code.localeCompare(b.code))
+    .map(it=>[it.code, escapeHtml(it.cat), escapeHtml(it.rate), escapeHtml(it.note||'')]);
+
+  let html = '';
+  if(mRows.length){
+    html += renderBracketTable({
+      title:'M코드 · 외래 본인부담면제자 및 1종 선택의료급여기관 적용자',
+      sub:'제1·2·3차 의료급여기관 공통 적용 (기관 무관)',
+      headers:['코드','대상','본인부담','관련 근거'],
+      rows: mRows
+    });
+  }
+  if(bRows.length){
+    html += renderBracketTable({
+      title:'B코드 · 2종 선택의료급여기관 적용자',
+      sub:'제1·2·3차 의료급여기관 공통 적용 (기관 무관)',
+      headers:['코드','대상','본인부담','관련 근거'],
+      rows: bRows
+    });
+  }
+  return html;
+}
+
+function renderEditableCodeTable(opts){
+  const codeItems = items.filter(it=>it.type===opts.type && it.group===opts.group)
+    .slice()
+    .sort((a,b)=> (a.code||'').localeCompare(b.code||''));
+  const headHtml = `<tr>${opts.headers.map(h=>`<th>${h}</th>`).join('')}<th style="width:84px;">관리</th></tr>`;
+  const bodyHtml = codeItems.map(it=>{
+    const cells = opts.rowMapper(it).map(c=>`<td>${c}</td>`).join('');
+    return `<tr>${cells}<td class="table-actions">
+      <button class="icon-btn" data-act="edit" data-id="${it.id}" aria-label="수정"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+      <button class="icon-btn danger" data-act="del" data-id="${it.id}" aria-label="삭제"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
+    </td></tr>`;
+  }).join('');
+  return `<div class="rate-table-wrap">
+    <div class="rate-table-title">${opts.title} (${codeItems.length}건)</div>
+    <table class="rate-table"><thead>${headHtml}</thead><tbody>${bodyHtml}</tbody></table>
+    <div class="foot-note">${opts.sub}</div>
+  </div>`;
+}
+
+function renderCoderefTable(){
+  return renderEditableCodeTable({
+    title:'특정기호 전체 목록',
+    sub:'코드나 키워드로 상단 검색창에서 검색할 수 있습니다. 각 행의 아이콘으로 수정·삭제할 수 있습니다.',
+    headers:['코드','내용','비고'],
+    type:'coderef', group:'특정기호 전체',
+    rowMapper: it=>[escapeHtml(it.code||''), escapeHtml(it.cat||''), escapeHtml(it.cond||'')]
+  });
+}
+
+function renderSanjeongTable(){
+  return renderEditableCodeTable({
+    title:'산정특례 등록번호 전체 목록',
+    sub:'코드나 키워드로 상단 검색창에서 검색할 수 있습니다. 각 행의 아이콘으로 수정·삭제할 수 있습니다.',
+    headers:['코드','내용','구분','등록번호'],
+    type:'sanjeong', group:'산정특례 등록번호 전체',
+    rowMapper: it=>[escapeHtml(it.code||''), escapeHtml(it.cat||''), escapeHtml(it.cond||''), escapeHtml(it.note||'')]
+  });
+}
+
+function renderTables(){
+  const root = document.getElementById('tablesRoot');
+  if(activeTab==='outpatient'){
+    let html = '';
+    if(activeAge==='65세 이상'){
+      html += renderBracketTable(BRACKET_TABLES.age65_1);
+      html += renderBracketTable(BRACKET_TABLES.age65_2a);
+      html += renderBracketTable(BRACKET_TABLES.age65_2b);
+    } else {
+      html += renderBracketTable(BRACKET_TABLES.under65);
+    }
+    root.innerHTML = html;
+  } else if(activeTab==='special'){
+    if(activeSpecial==='차상위1종'){
+      root.innerHTML = renderBracketTable({
+        title: SPECIAL_BASE.title,
+        sub: SPECIAL_BASE.sub,
+        headers: SPECIAL_BASE.headers,
+        rows: SPECIAL_BASE.rows
+      });
+    } else {
+      root.innerHTML = renderBracketTable(activeCare==='입원' ? SPECIAL2_TABLE : SPECIAL2_OUTPATIENT_TABLE);
+    }
+  } else if(activeTab==='medicaid'){
+    if(activeCare==='입원'){
+      root.innerHTML = renderBracketTable(MEDICAID_BASE);
+    } else {
+      root.innerHTML = renderBracketTable(MEDICAID_OUTPATIENT_BASE) + renderCodeTables();
+    }
+  } else if(activeTab==='coderef'){
+    root.innerHTML = renderCoderefTable();
+  } else if(activeTab==='sanjeong'){
+    root.innerHTML = renderSanjeongTable();
+  } else {
+    root.innerHTML = '';
+  }
+  root.querySelectorAll('[data-act="edit"]').forEach(b=>b.addEventListener('click', ()=>openModal(b.dataset.id)));
+  root.querySelectorAll('[data-act="del"]').forEach(b=>b.addEventListener('click', ()=>deleteItem(b.dataset.id)));
+}
+
+function matchesSearch(item, q){
+  if(!q) return true;
+  const hay = [item.cat, item.code, item.cond, item.rate, item.meal, item.note].join(' ').toLowerCase();
+  return hay.includes(q.toLowerCase());
+}
+
+function render(){
+  document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===activeTab));
+
+  const q = document.getElementById('searchInput').value.trim();
+  const root = document.getElementById('listRoot');
+  const searching = q.length > 0;
+
+  document.getElementById('ageChipsWrap').style.display = 'none';
+  document.getElementById('specialChipsWrap').style.display = 'none';
+  document.getElementById('careChipsWrap').style.display = 'none';
+  document.getElementById('filterChips').innerHTML = '';
+
+  if(searching){
+    document.getElementById('tablesRoot').innerHTML = '';
+    const filtered = items.filter(it=>matchesSearch(it, q));
+    if(filtered.length===0){
+      root.innerHTML = `<div class="empty">전체 항목에서 검색 결과가 없습니다. 다른 검색어를 입력해 보세요.</div>`;
+      return;
+    }
+    const byGroup = {};
+    const order = [];
+    filtered.forEach(it=>{
+      const label = TAB_LABEL[it.type] + ' · ' + it.group;
+      if(!byGroup[label]){ byGroup[label]=[]; order.push(label); }
+      byGroup[label].push(it);
+    });
+    let html = '';
+    order.forEach(g=>{
+      html += `<div class="group-title">${g}<span class="line"></span></div><div class="card-list">`;
+      byGroup[g].forEach(it=>{ html += renderItemCard(it); });
+      html += `</div>`;
+    });
+    root.innerHTML = html;
+    root.querySelectorAll('[data-act="edit"]').forEach(b=>b.addEventListener('click', ()=>openModal(b.dataset.id)));
+    root.querySelectorAll('[data-act="del"]').forEach(b=>b.addEventListener('click', ()=>deleteItem(b.dataset.id)));
+    return;
+  }
+
+  if(activeTab==='outpatient') renderAgeChips();
+  if(activeTab==='special'){
+    renderSpecialChips();
+    document.getElementById('careChipsWrap').style.display = activeSpecial==='차상위2종' ? 'flex' : 'none';
+    if(activeSpecial==='차상위2종') renderCareChips();
+  } else if(activeTab==='medicaid'){
+    document.getElementById('careChipsWrap').style.display = 'flex';
+    renderCareChips();
+  }
+  if(activeTab!=='coderef' && activeTab!=='sanjeong') renderGroupChips();
+  renderTables();
+
+  if(activeTab==='coderef' || activeTab==='sanjeong'){
+    root.innerHTML = '';
+    return;
+  }
+
+  let pool = items.filter(it=>it.type===activeTab);
+  let groupsOrder;
+  if(activeTab==='outpatient'){
+    groupsOrder = activeAge==='65세 이상' ? ['외래 특정 항목(65세 이상)','외래 일반 항목'] : ['외래 특정 항목(65세 미만)','외래 일반 항목'];
+  } else if(activeTab==='special'){
+    groupsOrder = activeSpecial==='차상위1종' ? ['차상위1종 특정 항목'] : (activeCare==='입원' ? ['차상위2종 특정 항목(입원)'] : ['차상위2종 특정 항목(외래)']);
+  } else if(activeTab==='medicaid'){
+    groupsOrder = activeCare==='입원'
+      ? ['의료급여 특정 항목(입원)','의료급여 특정기호(입원)']
+      : ['의료급여 외래 특정 항목(외래)'];
+  } else if(activeTab==='coderef'){
+    groupsOrder = [];
+  } else {
+    groupsOrder = GROUP_DEFS[activeTab];
+  }
+
+  if(activeTab==='outpatient' || activeTab==='special' || activeTab==='medicaid' || activeTab==='coderef'){
+    pool = pool.filter(it=>groupsOrder.includes(it.group));
+  }
+
+  const filtered = pool.filter(it => (activeGroup==='전체' || it.group===activeGroup));
+
+  if(filtered.length===0){
+    root.innerHTML = `<div class="empty">해당하는 항목이 없습니다. 새 항목을 추가해 보세요.</div>`;
+    return;
+  }
+
+  const byGroup = {};
+  groupsOrder.forEach(g=>byGroup[g]=[]);
+  filtered.forEach(it=>{ if(!byGroup[it.group]) byGroup[it.group]=[]; byGroup[it.group].push(it); });
+
+  let html = '';
+  groupsOrder.forEach(g=>{
+    const list = byGroup[g];
+    if(!list || list.length===0) return;
+    html += `<div class="group-title">${g}<span class="line"></span></div><div class="card-list">`;
+    list.forEach(it=>{ html += renderItemCard(it); });
+    html += `</div>`;
+  });
+
+  root.innerHTML = html;
+  root.querySelectorAll('[data-act="edit"]').forEach(b=>b.addEventListener('click', ()=>openModal(b.dataset.id)));
+  root.querySelectorAll('[data-act="del"]').forEach(b=>b.addEventListener('click', ()=>deleteItem(b.dataset.id)));
+}
+
+function renderItemCard(it){
+  return `
+        <div class="item-card ${it.legal?'tier-note':''}" data-id="${it.id}">
+          <div class="item-main">
+            <p class="cat">${it.code ? `[${escapeHtml(it.code)}] ` : ''}${escapeHtml(it.cat)}</p>
+            ${it.cond ? `<p class="cond">${escapeHtml(it.cond)}</p>` : ''}
+            <div class="rate-row">
+              <span class="rate-pill ${it.legal?'legal':''}">${escapeHtml(it.rate)}</span>
+              ${it.meal ? `<span class="rate-pill meal">식대 ${escapeHtml(it.meal)}</span>` : ''}
+            </div>
+            ${it.note ? `<p class="item-note">${escapeHtml(it.note)}</p>` : ''}
+          </div>
+          <div class="item-actions">
+            <button class="icon-btn" data-act="edit" data-id="${it.id}" aria-label="수정">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            </button>
+            <button class="icon-btn danger" data-act="del" data-id="${it.id}" aria-label="삭제">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+            </button>
+          </div>
+        </div>`;
+}
+
+function escapeHtml(s){
+  return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function populateGroupSelect(){
+  const sel = document.getElementById('f_group');
+  const tab = editingType || activeTab;
+  const groups = GROUP_DEFS[tab];
+  sel.innerHTML = groups.map(g=>`<option value="${g}">${g}</option>`).join('');
+  if(tab==='outpatient'){
+    sel.value = activeAge==='65세 이상' ? '외래 특정 항목(65세 이상)' : '외래 특정 항목(65세 미만)';
+  }
+  if(tab==='special'){
+    sel.value = activeSpecial==='차상위1종' ? '차상위1종 특정 항목' : (activeCare==='입원' ? '차상위2종 특정 항목(입원)' : '차상위2종 특정 항목(외래)');
+  }
+  if(tab==='medicaid'){
+    sel.value = activeCare==='입원' ? '의료급여 특정 항목(입원)' : '의료급여 외래 특정 항목(외래)';
+  }
+}
+
+function configureModalFields(tab){
+  const show = (id, on) => { document.getElementById(id).style.display = on ? '' : 'none'; };
+  if(tab==='coderef' || tab==='sanjeong'){
+    document.getElementById('label_cat').textContent = '내용 *';
+    document.getElementById('f_cat').placeholder = '예: 자연분만(본인부담 면제, 식대 50%)';
+    show('field_code', true);
+    document.getElementById('label_code').textContent = '코드';
+    document.getElementById('f_code').placeholder = '예: F001';
+    show('field_cond', true);
+    document.getElementById('label_cond').textContent = tab==='sanjeong' ? '구분(질환군 등)' : '비고';
+    document.getElementById('f_cond').placeholder = tab==='sanjeong' ? '예: 희귀질환' : '';
+    show('field_group', false);
+    show('field_rate', false);
+    show('field_meal', false);
+    show('field_note', tab==='sanjeong');
+    if(tab==='sanjeong'){
+      document.getElementById('label_note').textContent = '등록번호';
+      document.getElementById('f_note').placeholder = '예: 05~,21~';
+    }
+  } else {
+    document.getElementById('label_cat').textContent = '구분(항목명) *';
+    document.getElementById('f_cat').placeholder = '예: 격리입원료';
+    show('field_code', true);
+    document.getElementById('label_code').textContent = '코드(해당 시)';
+    document.getElementById('f_code').placeholder = '예: M003, B001 — 의료급여 코드표 항목일 때만 입력';
+    show('field_cond', true);
+    document.getElementById('label_cond').textContent = '적용 조건 / 대상';
+    document.getElementById('f_cond').placeholder = '예: 일반환자 해당 항목';
+    show('field_group', true);
+    show('field_rate', true);
+    document.getElementById('label_rate').textContent = '본인부담률 / 부담액 *';
+    show('field_meal', true);
+    show('field_note', true);
+    document.getElementById('label_note').textContent = '근거 / 비고';
+    document.getElementById('f_note').placeholder = '예: 시행령 별표2 1호 가목 1)';
+  }
+}
+
+function openModal(id){
+  editingId = id || null;
+  editingType = id ? (items.find(x=>x.id===id)||{}).type || activeTab : activeTab;
+  configureModalFields(editingType);
+  populateGroupSelect();
+  document.getElementById('err_cat').style.display='none';
+  document.getElementById('err_rate').style.display='none';
+
+  if(id){
+    const it = items.find(x=>x.id===id);
+    document.getElementById('modalTitle').textContent = '항목 수정';
+    document.getElementById('f_cat').value = it.cat;
+    document.getElementById('f_code').value = it.code||'';
+    document.getElementById('f_cond').value = it.cond||'';
+    document.getElementById('f_group').value = it.group;
+    document.getElementById('f_rate').value = it.rate;
+    document.getElementById('f_meal').value = it.meal||'';
+    document.getElementById('f_note').value = it.note||'';
+  } else {
+    document.getElementById('modalTitle').textContent = '항목 추가';
+    document.getElementById('f_cat').value = '';
+    document.getElementById('f_code').value = '';
+    document.getElementById('f_cond').value = '';
+    document.getElementById('f_rate').value = '';
+    document.getElementById('f_meal').value = '';
+    document.getElementById('f_note').value = '';
+  }
+  document.getElementById('modalBg').classList.add('open');
+}
+
+function closeModal(){
+  document.getElementById('modalBg').classList.remove('open');
+  editingId = null;
+}
+
+async function saveItem(){
+  const cat = document.getElementById('f_cat').value.trim();
+  const rate = document.getElementById('f_rate').value.trim();
+  let valid = true;
+  if(!cat){ document.getElementById('err_cat').style.display='block'; valid=false; } else { document.getElementById('err_cat').style.display='none'; }
+  if(!rate && editingType!=='coderef' && editingType!=='sanjeong'){ document.getElementById('err_rate').style.display='block'; valid=false; } else { document.getElementById('err_rate').style.display='none'; }
+  if(!valid) return;
+
+  const data = {
+    type: editingType,
+    cat,
+    code: document.getElementById('f_code').value.trim(),
+    cond: document.getElementById('f_cond').value.trim(),
+    group: document.getElementById('f_group').value,
+    rate,
+    meal: document.getElementById('f_meal').value.trim(),
+    note: document.getElementById('f_note').value.trim(),
+  };
+
+  if(editingId){
+    const idx = items.findIndex(x=>x.id===editingId);
+    items[idx] = {...items[idx], ...data};
+    toast('항목이 수정되었습니다.');
+  } else {
+    items.push({id:'u'+Date.now(), ...data});
+    toast('항목이 추가되었습니다.');
+  }
+  await persist();
+  closeModal();
+  render();
+}
+
+async function deleteItem(id){
+  if(!confirm('이 항목을 삭제하시겠습니까?')) return;
+  items = items.filter(x=>x.id!==id);
+  await persist();
+  toast('항목이 삭제되었습니다.');
+  render();
+}
+
+document.getElementById('searchInput').addEventListener('input', render);
+document.getElementById('addBtn').addEventListener('click', ()=>openModal(null));
+document.getElementById('cancelBtn').addEventListener('click', closeModal);
+document.getElementById('saveBtn').addEventListener('click', saveItem);
+document.getElementById('modalBg').addEventListener('click', (e)=>{ if(e.target.id==='modalBg') closeModal(); });
+document.querySelectorAll('.main-tab').forEach(b=>b.addEventListener('click', ()=>switchTab(b.dataset.tab)));
+
+
+/* =========================================================
+   씨차트 실무 참고표 (엑셀 원본 8개 시트)
+   ========================================================= */
+const EMBEDDED_DATA = {"order": ["건강보험-외래", "건강보험-입원", "차상위-외래", "차상위-입원", "의료급여-외래", "의료급여-입원", "희귀난치", "접수구분"], "sheets": {"건강보험-외래": {"headers": ["구분", "유형", "공상구분", "특정기호", "외래 부담율", "특수항목", "씨차트 구분", "비고"], "rows": [["보험", "건강보험(64세이하)", "", "", "30%", "30%", "보조유형 - 정상", ""], ["보험", "65세이상(15,000원이하)", "", "", "1500원", "30%", "보조유형 - 정상", ""], ["보험", "65세이상\n(15,000초과~20,000이하)", "", "", "10%", "30%", "보조유형 - 정상", ""], ["보험", "65세이상\n(20,000초과~25,000이하)", "", "", "20%", "30%", "보조유형 - 정상", ""], ["보험", "65세이상(25,000초과)", "", "", "30%", "30%", "보조유형 - 정상", ""], ["보험", "중증(암)", "", "V193\nMT014(01~시작)", "5%", "5%", "보조유형 - 중증", ""], ["보험", "중증(개심술, 개두술)", "", "V191,V192", "5%", "5%", "보조유형 - 개두(심)술", ""], ["보험", "화상중증", "", "V247,V248,V305,V306,\nV250\nMT014(09~시작)", "5%", "5%", "보조유형 - 중증", "화상중증 별도 구분자 없음"], ["보험", "희귀난치성질환자", "H", "MT014\n(05,21.23,11,14~시작)", "10%", "10%", "보조유형 - 산정특례", "본인부담금은\n지원금으로 빠짐"], ["보험", "산정특례희귀질환자", "", "MT014\n(05,21.23,11,14~시작)", "10%", "10%", "보조유형 - 산정특례", ""], ["보험", "중증치매", "", "V800,V810\nMT014(15~시작)", "10%", "10%", "보조유형 - 치매", "치매사전승인번호(MT052) 필수"], ["보험", "조산아", "", "F016", "5%", "5%", "보조유형 - 조산/저체중/\n신생아/자연분만", "조산아 보조유형은 외래만 해당"], ["보험", "1세미만", "", "F024", "5%", "5%", "–", ""], ["보험", "1세이상~6세미만", "", "", "21%", "21%", "–", "성인 부담율의 70%"], ["보험", "자립준비청년", "", "F028", "14%", "14%", "보조유형 - 자립준비청년", ""], ["보험", "본인부담율90%", "", "F029", "90%", "90%", "보조유형 - 본인부담율 90%", ""], ["보험", "임신부", "", "F015", "10%", "10%", "보조유형 - 임산부", ""], ["보험", "당뇨,고혈압 확진검사", "", "F022", "0%", "0%", "검진사유 - 고혈압,당뇨", ""], ["보험", "잠복결핵 검진대상자", "", "F009", "0%", "0%", "희귀난치 - 잠복결핵(검사)", ""], ["보험", "청소년 사람유두종바이러스\n예방접종 진찰료", "", "F012", "0%", "0%", "", "상병 R688\n초진료 산정"], ["보험", "요양병원 입원 중 \n산정특례 질환 의뢰 진료시", "", "MT063", "10%", "10%", "–", "자격조회에 나오는 요양기관기호\n특정내역 입력 후 청구"]]}, "건강보험-입원": {"headers": ["구분", "유형", "공상구분", "특정기호", "입원부담율", "특수항목", "식대", "씨차트 구분", "비고"], "rows": [["보험", "건강보험", "", "", "20%", "30%", "50%", "보조유형 - 정상", ""], ["보험", "중증(암)", "", "V193\nMT014(01~시작)", "5%", "5%", "50%", "보조유형 - 중증", ""], ["보험", "중증(개심술, 개두술)", "", "V191,V192", "5%", "5%", "50%", "보조유형 - 개두(심)술", ""], ["보험", "화상중증", "", "V247,V248,V249,V250\nMT014(09~시작)", "5%", "5%", "50%", "보조유형 - 중증", "화상중증 별도 구분자 없음"], ["보험", "희귀난치성질환자", "H", "MT014\n(05,21.23,11,14~시작)", "10%", "10%", "50%", "보조유형 - 산정특례", "본인부담금은\n지원금으로 빠짐"], ["보험", "산정특례희귀질환자", "", "MT014\n(05,21.23,11,14~시작)", "10%", "10%", "50%", "보조유형 - 산정특례", ""], ["보험", "중증치매", "", "V800,V810\nMT014(15~시작)", "10%", "10%", "50%", "보조유형 - 치매", "치매사전승인번호(MT052) 필수"], ["보험", "신생아", "", "F005", "0%", "0%", "50%", "보조유형 - 조산/저체중/\n신생아/자연분만", ""], ["보험", "2세미만", "", "F027", "0%", "0%", "50%", "보조유형 - 2세미만", ""], ["보험", "15세이하", "", "F018", "5%", "5%", "50%", "보조유형 - 15세이하", ""], ["보험", "자연분만", "", "F001", "0%", "0%", "50%", "보조유형 - 조산/저체중/\n신생아/자연분만", ""], ["보험", "제왕절개", "", "F013", "5%", "5%", "50%", "–", "씨차트 유형 없음"]]}, "차상위-외래": {"headers": ["구분", "유형", "공상구분", "특정기호", "외래 부담율", "특수항목", "씨차트 구분", "비고"], "rows": [["보험", "차상위 1종", "C", "", "0%", "0%", "보조유형 - 차상위1종", ""], ["보험", "차상위 1종 정신과 입원\n중 외래진료", "C", "상해외인(MT001) : E", "0%", "0%", "보조유형 - 차상위1종", ""], ["보험", "차상위 2종 만성질환이외", "E", "", "직접조제: 1500     직접조제 이외 : 1000", "14%", "보조유형 - 차상위 2종", ""], ["보험", "차상위 2종 만성질환이외 장애인", "F", "", "직접조제: 1500     직접조제 이외 : 1000", "14%", "보조유형 - 차상위 2종", "본인부담금은\n장애인기금으로 빠짐"], ["보험", "차상위 2종 중증", "E/F", "V193\nMT014(01~시작)", "직접조제: 1500     직접조제 이외 : 1000", "5%", "보조유형 - 차상위 2종 중증", "본인부담금은\n장애인기금으로 빠짐"], ["보험", "차상위 2종 희귀", "E/F", "MT014\n(05,21.23,11,14~시작)", "직접조제: 1500     직접조제 이외 : 1000", "10%", "보조유형 - 차상위 2종 희귀", "본인부담금은\n장애인기금으로 빠짐"], ["보험", "차상위 2종 치매", "E/F", "V800,V810\nMT014(15~시작)", "직접조제: 1500     직접조제 이외 : 1000", "5%", "보조유형 - 차상위 2종 치매", "본인부담금은\n장애인기금으로 빠짐"], ["보험", "차상위 2종 1세미만", "E/F", "F024", "0%", "5%", "–", ""], ["보험", "차상위2종 임산부", "E/F", "F015", "직접조제: 1500     직접조제 이외 : 1000", "5%", "", ""], ["보험", "차상위2종 조산아,저체중아", "E/F", "F016", "직접조제: 1500     직접조제 이외 : 1000", "5%", "보조유형 - 차상위2종 \n조산/임산부", ""], ["보험", "차상위 2종 정신과 입원\n중 외래진료", "E/F", "상해외인(MT001) : E", "10%", "10%", "없음", "본인부담금은\n장애인기금으로 빠짐"]]}, "차상위-입원": {"headers": ["구분", "유형", "공상구분", "특정기호", "입원부담율", "특수항목", "식대", "씨차트 구분", "비고"], "rows": [["보험", "차상위 1종", "C", "", "0%", "0%", "기본식대 20%", "보조유형 - 차상위1종", ""], ["보험", "차상위 2종 만성질환이외", "E", "", "14%", "14%", "기본식대 20%", "보조유형 - 차상위 2종", ""], ["보험", "차상위 2종 만성질환이외 장애인", "F", "", "14%", "14%", "기본식대 20%", "보조유형 - 차상위 2종", "기본식대 20% 제외한\n본인부담금은\n장애인기금으로 빠짐"], ["보험", "차상위 2종 중증", "E/F", "V193\nMT014(01~시작)", "5%", "5%", "기본식대 20%", "보조유형 - 차상위 2종 중증", "기본식대 20% 제외한\n본인부담금은\n장애인기금으로 빠짐"], ["보험", "차상위 2종 희귀", "E/F", "MT014\n(05,21.23,11,14~시작)", "10%", "10%", "기본식대 20%", "보조유형 - 차상위 2종 희귀", "기본식대 20% 제외한\n본인부담금은\n장애인기금으로 빠짐"], ["보험", "차상위 2종 치매", "E/F", "V800,V810\nMT014(15~시작)", "5%", "5%", "기본식대 20%", "보조유형 - 차상위 2종 치매", "기본식대 20% 제외한\n본인부담금은\n장애인기금으로 빠짐"], ["보험", "차상위 2종 정신과 입원", "E/F", "F007", "10%", "10%", "기본식대 20%", "", "기본식대 20% 제외한\n본인부담금은\n장애인기금으로 빠짐"], ["보험", "차상위2종 6세미만", "E/F", "F019", "0%", "0%", "기본식대 20%", "", "기본식대 20% 제외한\n본인부담금은\n장애인기금으로 빠짐"], ["보험", "차상위2종 6~15세", "E/F", "F020", "3%", "3%", "기본식대 20%", "", "기본식대 20% 제외한\n본인부담금은\n장애인기금으로 빠짐"], ["보험", "차상위2종 자연분만/\n제왕절개", "E/F", "", "0%", "0%", "기본식대 20%", "", "기본식대 20% 제외한\n본인부담금은\n장애인기금으로 빠짐"], ["보험", "차상위 2종 정신과 입원", "E/F", "F007(입원)", "10%", "10%", "기본식대 20%", "", "기본식대 20% 제외한\n본인부담금은\n장애인기금으로 빠짐"]]}, "의료급여-외래": {"headers": ["구분", "유형", "외래 부담율", "특수항목", "씨차트 구분", "특정내역", "비고"], "rows": [["의료급여 1종", "1종", "직접조제: 1500     직접조제 이외 : 1000", "5%", "없음", "", ""], ["의료급여 1종", "정신과 입원 중 \n외래 진료", "면제", "면제", "전액청구", "상해외인(MT001) : E", "입원부담률 적용"], ["의료급여 2종", "2종", "직접조제: 1500     직접조제 이외 : 1000", "15%", "", "", ""], ["의료급여 2종", "임신부", "5%", "5%", "보조유형 - 임신부", "MT018 : B010\nMT002 : F015", ""], ["의료급여 2종", "만5세까지 조산아\n및 저체중", "5%", "5%", "", "MT018 : B011\nMT002 : F016", ""], ["의료급여 2종", "치매질환자", "5%", "5%", "보조유형 - 치매", "MT018 : B013\nMT002 : V800,V810", ""], ["의료급여 2종", "당뇨,고혈압 \n확진검사", "0%", "0%", "검진사유", "MT002 : F022", ""], ["의료급여 2종", "잠복결핵", "0%", "0%", "보조유형 - 잠복결핵", "MT018 : B030\nMT002 : V010", ""], ["의료급여 2종", "가정간호", "10%", "10%", "", "", ""], ["의료급여 2종", "정신과 입원 중 \n외래 진료", "10%", "10%", "없음", "상해외인(MT001) : E", "입원부담률 적용"]]}, "의료급여-입원": {"headers": ["구분", "유형", "특정기호", "외래 부담율", "특수항목", "식대", "씨차트 구분", "비고"], "rows": [["의료급여 1종", "1종", "", "0%", "0%", "기본식대 20%", "없음", ""], ["의료급여 2종", "2종", "", "10%", "10%", "기본식대 20%", "", ""], ["의료급여 2종", "장애인", "", "10%", "10%", "기본식대 20%", "", "본인부담금은 \n장애인 기금으로 발생"], ["의료급여 2종", "중증(화상중증포함)", "V191,192,193, V247,V248,V249,V250", "0%", "0%", "기본식대 5%", "보조유형 - 중증", ""], ["의료급여 2종", "자연분만", "F001", "0%", "0%", "0%", "", ""], ["의료급여 2종", "제왕절개", "F013", "0%", "0%", "기본식대 20%", "보조유형 - 6세미만", ""], ["의료급여 2종", "6세미만", "F019", "0%", "0%", "0%", "보조유형 - 6세미만", ""], ["의료급여 2종", "행려", "", "0%", "0%", "0%", "", ""], ["의료급여 2종", "잠복결핵", "V010", "0%", "0%", "기본식대 20%", "", ""], ["의료급여 2종", "6세이상 15세이하", "F020", "3%", "3%", "기본식대 20%", "보조유형 - 15세이하", ""], ["의료급여 2종", "치매질환자", "V800, V810", "5%", "5%", "기본식대 20%", "", ""]]}, "희귀난치": {"headers": ["구분", "자격조회", "등록번호", "특정기호", "본인부담", "비고"], "rows": [["보조유형 : 잠복결핵\n(U)", "", "22", "V010", "전액청구", "22일때 자격조회시 바로 들어감"], ["희귀난치 : 잠복결핵(검사)\n(T)", "자격에 나오는 부분 없음", "", "F009", "전액청구", "자동으로 들어가지 않고 선택해야 함\n보조유형 : 정상\n건강보험만 해당\n지원금으로 빠짐"], ["희귀난치 : 본인부담 면제결핵\n(F)", "", "08", "V000", "전액청구", "08일때 자격조회시 바로 들어감\n보조유형 : 산정특례(K)\n보조유형- 산정특례, 차상위 2종 희귀 일경우에만 적용되고 다른건 다 정상으로 처리"], ["희귀난치 : 희귀난치지원금대상자\n(H)", "", "05,21,23", "V", "10%", "희귀난치구분에 \"H\"가 있는 경우 해당 \n본인부담금 지원금으로 빠짐\n보조유형- 산정특례, 차상위 2종 희귀 일경우에만 적용되고 다른건 다 정상으로 처리"]]}, "접수구분": {"headers": ["구분", "유형", "특정기호", "외래 부담율", "씨차트 구분", "청구코드", "비고"], "rows": [["일차의료 방문진료", "건강보험", "S017", "30%", "접수구분 - 방문진료", "IA001, IA002", ""], ["일차의료 방문진료", "건강보험\n(산소치료,인공호흡기)", "S048", "15%", "접수구분 - 방문진료", "", ""], ["일차의료 방문진료", "건강보험\n(와상1∙2등급)", "S049", "15%", "접수구분 - 방문진료", "", ""], ["일차의료 방문진료", "차상위1∙2종, \n의료급여 1∙2종", "S017", "5%", "접수구분 - 방문진료", "", ""], ["장애인건강 주치의", "건강보험", "S010", "10%\n환자관리료는 \n공단에서 지원", "접수구분 - 장애인건강주치의(시범사업)", "IA6XX, IA06X", "방문진료료Ⅰ - 타 수가 산정 불가\n(원외처방전 분리청구)\n방문진료료Ⅱ - 타 수가 산정 가능\n방문간호료와 방문료 동시산정가능"], ["장애인건강 주치의", "차상위1∙2종, \n의료급여 1∙2종", "S010", "면제", "접수구분 - 장애인건강주치의(시범사업)", "", "방문진료료Ⅰ - 타 수가 산정 불가\n(원외처방전 분리청구)\n방문진료료Ⅱ - 타 수가 산정 가능\n방문간호료와 방문료 동시산정가능"], ["장애인 맞춤형 검진바우처", "건강보험", "S036", "10%를 공단에서 \n지원", "접수구분 - 맞춤형검진바우처(시범사업)", "", "방문진료료Ⅰ - 타 수가 산정 불가\n(원외처방전 분리청구)\n방문진료료Ⅱ - 타 수가 산정 가능\n방문간호료와 방문료 동시산정가능"], ["장애인 맞춤형 검진바우처", "차상위1∙2종, \n의료급여 1∙2종", "S036", "면제", "접수구분 - 맞춤형검진바우처(시범사업)", "", "방문진료료Ⅰ - 타 수가 산정 불가\n(원외처방전 분리청구)\n방문진료료Ⅱ - 타 수가 산정 가능\n방문간호료와 방문료 동시산정가능"], ["치매관리주치의", "건강보험", "S045", "20%", "접수구분 -치매관리주치의(시범사업)", "IB64X, IB65X, IB66X, IB67X, IB68X", "방문진료료Ⅰ - 타 수가 산정 불가\n(원외처방전 분리청구)\n방문진료료Ⅱ - 타 수가 산정 가능"], ["치매관리주치의", "차상위1∙2종, \n의료급여 1∙2종", "S045", "각자의 본인부담율\n적용", "접수구분 -치매관리주치의(시범사업)", "", "방문진료료Ⅰ - 타 수가 산정 불가\n(원외처방전 분리청구)\n방문진료료Ⅱ - 타 수가 산정 가능"], ["일차의료 만성질환(본사업)", "건강보험", "F030", "20%", "접수구분 - 일차의료 만성질환(본사업)", "AX001~AX005", ""], ["일차의료 만성질환(본사업)", "65세이상(~25,000이하)", "F030", "1500원", "접수구분 - 일차의료 만성질환(본사업)", "", ""], ["일차의료 만성질환(본사업)", "차상위1∙2종, \n의료급여 1∙2종", "F030", "각자의 본인부담율\n적용", "접수구분 - 일차의료 만성질환(본사업)", "", ""], ["일차의료 만성질환(환자관리료)", "건강보험", "S012", "20%", "접수구분 - 만성질환(환자관리료)", "IB023, IB0254,IB025", ""], ["일차의료 만성질환(환자관리료)", "65세이상(~25,000이하)", "S012", "1500원", "접수구분 - 만성질환(환자관리료)", "", ""], ["일차의료 만성질환(환자관리료)", "차상위1∙2종, \n의료급여 1∙2종", "S012", "각자의 본인부담율\n적용", "접수구분 - 만성질환(환자관리료)", "", ""], ["동네의원 마음건강 돌봄", "모든 자격", "S039", "0%", "접수구분 - 동네의원 마음건강돌봄\n(시범사업)", "ID011,ID012,ID021,ID022", ""], ["진료정보교류사업", "건강보험(차상위제외)만 \n해당", "의뢰 : S029\n회송 : S002", "30%", "접수구분 - 진료정보교류 시범사법", "IA026,IA027", "심평원에 3일안에 작성해야\n 청구 가능"], ["가정간호", "건강보험", "V008,V194,V231,\nV293,V251,V274", "20%", "접수구분 - 가정간호", "", ""], ["가정간호", "중증", "V008,V194,V231,\nV293,V251,V274", "5%", "접수구분 - 가정간호", "", ""], ["가정간호", "산정특례", "V008,V194,V231,\nV293,V251,V274", "10%", "접수구분 - 가정간호", "", ""], ["가정간호", "차상위1종", "V008,V194,V231,\nV293,V251,V274", "0%", "접수구분 - 가정간호", "", ""], ["가정간호", "차상위2종", "V008,V194,V231,\nV293,V251,V274", "14%", "접수구분 - 가정간호", "", ""], ["가정간호", "차상위2종 희귀", "V008,V194,V231,\nV293,V251,V274", "1000/1500", "접수구분 - 가정간호", "", ""], ["가정간호", "차상위2종 치매", "V800,V810", "1000/1500", "접수구분 - 가정간호", "", ""], ["가정간호", "차상위2종 중증", "V008,V194,V231,\nV293,V251,V274", "1000/1500", "접수구분 - 가정간호", "", ""], ["가정간호", "의료급여 1종", "V008,V194,V231,\nV293,V251,V274", "0%", "접수구분 - 가정간호", "", "MT018 : M008"], ["가정간호", "의료급여 2종", "V008,V194,V231,\nV293,V251,V274", "10%", "접수구분 - 가정간호", "", ""]]}}};
+const PRACTICAL_KEY = 'copay-practical-sheets-v1';
+
+let stateP = null;
+let activeSheetP = null;
+let editingRowP = null; // row index being edited, or 'new'
+let editDraftP = null;  // array of values while editing
+let searchTermP = '';
+let globalModeP = false;
+
+async function loadPracticalState(){
+  try{
+    const res = await window.storage.get(PRACTICAL_KEY, true);
+    if(res && res.value){
+      stateP = JSON.parse(res.value);
+    } else {
+      stateP = JSON.parse(JSON.stringify(EMBEDDED_DATA));
+      await persistPracticalState();
+    }
+  }catch(e){
+    stateP = JSON.parse(JSON.stringify(EMBEDDED_DATA));
+  }
+  activeSheetP = stateP.order[0];
+  renderPractical();
+}
+
+async function persistPracticalState(){
+  try{
+    await window.storage.set(PRACTICAL_KEY, JSON.stringify(stateP), true);
+  }catch(e){
+    toast('저장에 실패했습니다. 다시 시도해 주세요.');
+  }
+}
+
+function currentSheetP(){ return stateP.sheets[activeSheetP]; }
+
+function highlightP(text, term){
+  const t = String(text ?? '');
+  if(!term) return escapeHtml(t);
+  const idx = t.toLowerCase().indexOf(term.toLowerCase());
+  if(idx === -1) return escapeHtml(t);
+  return escapeHtml(t.slice(0,idx)) + '<mark>' + escapeHtml(t.slice(idx, idx+term.length)) + '</mark>' + escapeHtml(t.slice(idx+term.length));
+}
+
+function isRatePillP(header, value){
+  return /부담율|본인부담|식대/.test(header) && /%$/.test(String(value).trim());
+}
+
+function classForHeaderP(h){
+  if(h === '구분') return 'col-group';
+  if(h === '비고') return 'col-note';
+  if(h === '특정내역' || h === '씨차트 구분') return 'col-note2';
+  if(h === '유형' || h === '자격조회') return 'col-type';
+  if(h === '특정기호' || h === '청구코드') return 'col-code';
+  if(/부담율|^본인부담$|특수항목|식대/.test(h)) return 'col-rate';
+  if(h === '공상구분' || h === '등록번호') return 'col-tiny';
+  return '';
+}
+
+function filteredRowIndexesP(){
+  const sheet = currentSheetP();
+  if(!searchTermP) return sheet.rows.map((_,i)=>i);
+  const term = searchTermP.toLowerCase();
+  return sheet.rows.reduce((acc,row,i)=>{
+    if(row.some(v => String(v ?? '').toLowerCase().includes(term))) acc.push(i);
+    return acc;
+  }, []);
+}
+
+function renderTabsP(){
+  const el = document.getElementById('ptTabStrip');
+  el.innerHTML = '';
+  stateP.order.forEach(name=>{
+    const btn = document.createElement('button');
+    btn.className = 'pt-tab' + (name===activeSheetP && !globalModeP ? ' active' : '');
+    const count = stateP.sheets[name].rows.length;
+    btn.innerHTML = escapeHtml(name) + '<span class="cnt">' + count + '</span>';
+    btn.addEventListener('click', ()=>{
+      globalModeP = false;
+      document.getElementById('ptGlobalToggle').checked = false;
+      activeSheetP = name;
+      editingRowP = null;
+      searchTermP = '';
+      document.getElementById('ptSearchBox').value = '';
+      renderPractical();
+    });
+    el.appendChild(btn);
+  });
+}
+
+function startAddP(){
+  globalModeP = false;
+  document.getElementById('ptGlobalToggle').checked = false;
+  editingRowP = 'new';
+  editDraftP = currentSheetP().headers.map(()=>'');
+  renderPractical();
+  const firstInput = document.querySelector('#ptBodyRows textarea.pt-cell-edit');
+  if(firstInput) firstInput.focus();
+}
+function startEditP(i){
+  editingRowP = i;
+  editDraftP = currentSheetP().rows[i].slice();
+  renderPractical();
+  const firstInput = document.querySelector('#ptBodyRows textarea.pt-cell-edit');
+  if(firstInput) firstInput.focus();
+}
+function cancelEditP(){
+  editingRowP = null;
+  editDraftP = null;
+  renderPractical();
+}
+async function saveEditP(){
+  const sheet = currentSheetP();
+  const hasContent = editDraftP.some(v => String(v||'').trim() !== '');
+  if(!hasContent){
+    toast('내용을 입력해 주세요.');
+    return;
+  }
+  if(editingRowP === 'new'){
+    sheet.rows.push(editDraftP.slice());
+    toast('행을 추가했습니다.');
+  } else {
+    sheet.rows[editingRowP] = editDraftP.slice();
+    toast('수정했습니다.');
+  }
+  editingRowP = null;
+  editDraftP = null;
+  await persistPracticalState();
+  renderPractical();
+}
+async function deleteRowP(i){
+  const sheet = currentSheetP();
+  const label = sheet.rows[i][0] || sheet.rows[i][1] || '이 행';
+  if(!confirm('"' + label + '" 항목을 삭제하시겠습니까?')) return;
+  sheet.rows.splice(i,1);
+  await persistPracticalState();
+  toast('삭제했습니다.');
+  renderPractical();
+}
+
+const FIXED_PCT_P = {'col-group':13, 'col-note':17, 'col-actions':10};
+
+function buildColGroupP(headers){
+  const classes = headers.map(h=>classForHeaderP(h));
+  let usedPct = FIXED_PCT_P['col-actions'];
+  let autoCount = 0;
+  classes.forEach(c=>{
+    if(FIXED_PCT_P[c] !== undefined){ usedPct += FIXED_PCT_P[c]; }
+    else { autoCount++; }
+  });
+  const remaining = Math.max(100 - usedPct, autoCount * 6);
+  const autoPct = autoCount > 0 ? remaining / autoCount : 0;
+  let html = '';
+  classes.forEach(c=>{
+    const pct = FIXED_PCT_P[c] !== undefined ? FIXED_PCT_P[c] : autoPct;
+    html += '<col style="width:' + pct.toFixed(2) + '%;">';
+  });
+  html += '<col style="width:' + FIXED_PCT_P['col-actions'] + '%;">';
+  document.getElementById('ptColGroup').innerHTML = html;
+}
+
+function renderHeadP(){
+  const headRow = document.getElementById('ptHeadRow');
+  headRow.innerHTML = '';
+  buildColGroupP(currentSheetP().headers);
+  currentSheetP().headers.forEach(h=>{
+    const th = document.createElement('th');
+    th.textContent = h;
+    const cls = classForHeaderP(h);
+    if(cls) th.classList.add(cls);
+    headRow.appendChild(th);
+  });
+  const thAction = document.createElement('th');
+  thAction.className = 'col-actions';
+  thAction.textContent = '관리';
+  headRow.appendChild(thAction);
+}
+
+function renderEditRowP(rowIdx, values){
+  const tr = document.createElement('tr');
+  tr.className = 'editing' + (rowIdx === 'new' ? ' new-row' : '');
+  currentSheetP().headers.forEach((h, ci)=>{
+    const td = document.createElement('td');
+    const cls = classForHeaderP(h);
+    if(cls) td.classList.add(cls);
+    const ta = document.createElement('textarea');
+    ta.className = 'pt-cell-edit';
+    ta.value = values[ci] ?? '';
+    ta.rows = 1;
+    ta.placeholder = h;
+    ta.addEventListener('input', ()=>{ editDraftP[ci] = ta.value; });
+    ta.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); saveEditP(); }
+      if(e.key === 'Escape'){ cancelEditP(); }
+    });
+    td.appendChild(ta);
+    tr.appendChild(td);
+  });
+  const tdAction = document.createElement('td');
+  tdAction.className = 'col-actions';
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'btn btn-small btn-primary';
+  saveBtn.textContent = '저장';
+  saveBtn.onclick = saveEditP;
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn btn-small btn-ghost';
+  cancelBtn.textContent = '취소';
+  cancelBtn.style.marginLeft = '4px';
+  cancelBtn.onclick = cancelEditP;
+  tdAction.appendChild(saveBtn);
+  tdAction.appendChild(cancelBtn);
+  tr.appendChild(tdAction);
+  return tr;
+}
+
+function renderViewRowP(i, row, headers){
+  const tr = document.createElement('tr');
+  row.forEach((val, ci)=>{
+    const td = document.createElement('td');
+    if(ci === 0) td.classList.add('rowlabel');
+    const cls = classForHeaderP(headers[ci]);
+    if(cls) td.classList.add(cls);
+    if(isRatePillP(headers[ci], val) && !searchTermP){
+      td.innerHTML = '<span class="rate-pill">' + escapeHtml(val) + '</span>';
+    } else {
+      td.innerHTML = highlightP(val, searchTermP);
+    }
+    tr.appendChild(td);
+  });
+  const tdAction = document.createElement('td');
+  tdAction.className = 'col-actions';
+  const editBtn = document.createElement('button');
+  editBtn.className = 'btn btn-small';
+  editBtn.textContent = '수정';
+  editBtn.onclick = ()=> startEditP(i);
+  const delBtn = document.createElement('button');
+  delBtn.className = 'btn btn-small btn-danger';
+  delBtn.textContent = '삭제';
+  delBtn.style.marginLeft = '4px';
+  delBtn.onclick = ()=> deleteRowP(i);
+  tdAction.appendChild(editBtn);
+  tdAction.appendChild(delBtn);
+  tr.appendChild(tdAction);
+  return tr;
+}
+
+function renderNormalBodyP(){
+  const sheet = currentSheetP();
+  const bodyRows = document.getElementById('ptBodyRows');
+  const emptyState = document.getElementById('ptEmptyState');
+  const dataTable = document.getElementById('ptDataTable');
+  bodyRows.innerHTML = '';
+  if(editingRowP === 'new'){
+    bodyRows.appendChild(renderEditRowP('new', editDraftP));
+  }
+  const idxs = filteredRowIndexesP();
+  if(idxs.length === 0 && editingRowP !== 'new'){
+    emptyState.style.display = 'block';
+    dataTable.style.display = 'none';
+    return;
+  }
+  emptyState.style.display = 'none';
+  dataTable.style.display = 'table';
+  idxs.forEach(i=>{
+    if(editingRowP === i){
+      bodyRows.appendChild(renderEditRowP(i, editDraftP));
+    } else {
+      bodyRows.appendChild(renderViewRowP(i, sheet.rows[i], sheet.headers));
+    }
+  });
+}
+
+function renderGlobalBodyP(){
+  const headRow = document.getElementById('ptHeadRow');
+  const bodyRows = document.getElementById('ptBodyRows');
+  const emptyState = document.getElementById('ptEmptyState');
+  const dataTable = document.getElementById('ptDataTable');
+  headRow.innerHTML = '<th>시트</th><th>구분</th><th>내용 미리보기</th><th class="col-actions">이동</th>';
+  document.getElementById('ptColGroup').innerHTML = '<col style="width:14%;"><col style="width:14%;"><col style="width:62%;"><col style="width:10%;">';
+  bodyRows.innerHTML = '';
+  const term = searchTermP.toLowerCase();
+  let results = [];
+  stateP.order.forEach(name=>{
+    const sheet = stateP.sheets[name];
+    sheet.rows.forEach((row, i)=>{
+      const joined = row.join(' / ');
+      if(!term || joined.toLowerCase().includes(term)){
+        results.push({name, i, row, joined});
+      }
+    });
+  });
+  if(results.length === 0){
+    emptyState.style.display = 'block';
+    dataTable.style.display = 'none';
+    return;
+  }
+  emptyState.style.display = 'none';
+  dataTable.style.display = 'table';
+  results.forEach(r=>{
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    tr.innerHTML = '<td><span class="pt-sheet-tag">' + escapeHtml(r.name) + '</span></td>'
+      + '<td class="rowlabel">' + highlightP(r.row[0], searchTermP) + '</td>'
+      + '<td>' + highlightP(r.joined, searchTermP) + '</td>'
+      + '<td class="col-actions"><button class="btn btn-small">보기 →</button></td>';
+    tr.addEventListener('click', ()=>{
+      globalModeP = false;
+      document.getElementById('ptGlobalToggle').checked = false;
+      activeSheetP = r.name;
+      const term = document.getElementById('ptSearchBox').value;
+      renderPractical();
+      document.getElementById('ptSearchBox').value = term;
+      searchTermP = term;
+      renderPractical();
+    });
+    bodyRows.appendChild(tr);
+  });
+}
+
+function renderPractical(){
+  if(!stateP) return;
+  renderTabsP();
+  const panelTitle = document.getElementById('ptPanelTitle');
+  const panelSub = document.getElementById('ptPanelSub');
+  if(globalModeP){
+    panelTitle.textContent = '전체 표 검색';
+    panelSub.textContent = stateP.order.length + '개 표 전체 대상';
+    document.getElementById('ptBtnAdd').style.display = 'none';
+    renderGlobalBodyP();
+  } else {
+    const sheet = currentSheetP();
+    panelTitle.textContent = activeSheetP;
+    panelSub.textContent = sheet.rows.length + '건';
+    document.getElementById('ptBtnAdd').style.display = '';
+    renderHeadP();
+    renderNormalBodyP();
+  }
+  updateScrollHintP();
+}
+
+function updateScrollHintP(){
+  requestAnimationFrame(()=>{
+    const wrap = document.getElementById('ptTableScroll');
+    const hint = document.getElementById('ptScrollHint');
+    if(!wrap || !hint) return;
+    hint.classList.toggle('show', wrap.scrollWidth > wrap.clientWidth + 2);
+  });
+}
+
+
+document.getElementById('ptSearchBox').addEventListener('input', ()=>{
+  searchTermP = document.getElementById('ptSearchBox').value.trim();
+  renderPractical();
+});
+document.getElementById('ptGlobalToggle').addEventListener('change', ()=>{
+  globalModeP = document.getElementById('ptGlobalToggle').checked;
+  editingRowP = null;
+  renderPractical();
+});
+document.getElementById('ptBtnAdd').addEventListener('click', startAddP);
+document.getElementById('ptBtnReset').addEventListener('click', async ()=>{
+  if(!confirm('씨차트 실무 참고표를 원본 엑셀 기준으로 되돌릴까요? (팀 전체에 반영됩니다)')) return;
+  stateP = JSON.parse(JSON.stringify(EMBEDDED_DATA));
+  activeSheetP = stateP.order[0];
+  editingRowP = null;
+  searchTermP = '';
+  document.getElementById('ptSearchBox').value = '';
+  await persistPracticalState();
+  toast('초기값으로 복원했습니다.');
+  renderPractical();
+});
+document.getElementById('ptBtnExport').addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify(stateP, null, 1)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = '본인부담율_실무표_백업_' + stamp + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('백업 파일을 내보냈습니다.');
+});
+document.getElementById('ptBtnImportTrigger').addEventListener('click', ()=>{
+  document.getElementById('ptImportFile').click();
+});
+document.getElementById('ptImportFile').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async ()=>{
+    try{
+      const parsed = JSON.parse(reader.result);
+      if(!parsed.sheets || !parsed.order) throw new Error('형식 오류');
+      stateP = parsed;
+      activeSheetP = stateP.order[0];
+      editingRowP = null;
+      await persistPracticalState();
+      toast('불러오기 완료했습니다. (팀 전체에 반영됩니다)');
+      renderPractical();
+    }catch(err){
+      alert('올바른 백업 파일이 아닙니다.');
+    }
+  };
+  reader.readAsText(file, 'utf-8');
+  e.target.value = '';
+});
+
+/* ---- 모드 전환 (법정 기준 ↔ 씨차트 실무) ---- */
+function switchMode(mode){
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
+  document.getElementById('legalMode').style.display = mode==='legal' ? '' : 'none';
+  document.getElementById('practicalMode').style.display = mode==='practical' ? '' : 'none';
+  if(mode==='legal'){
+    document.getElementById('pageTitle').textContent = '의원급 본인부담율 조회 — ' + TAB_LABEL[activeTab];
+    document.getElementById('pageDesc').textContent = TAB_DESC[activeTab];
+  } else {
+    document.getElementById('pageTitle').textContent = '씨차트 실무 참고표';
+    document.getElementById('pageDesc').textContent = '씨차트 시스템에서 사용하는 보조유형·특정기호·MT코드 등 실무 기준의 본인부담율 원본 표입니다. 엑셀 원본(본인부담정리.xlsx) 8개 시트를 그대로 담았습니다.';
+    updateScrollHintP();
+  }
+}
+document.querySelectorAll('.mode-btn').forEach(b=>b.addEventListener('click', ()=>switchMode(b.dataset.mode)));
+
+switchTab('inpatient');
+loadItems();
+loadPracticalState();
+</script>
+</body>
+</html>
