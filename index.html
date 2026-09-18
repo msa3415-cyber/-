@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>청구백서</title>
+<style>
+  :root{
+    --navy:#0f2a4a;
+    --navy-2:#16385f;
+    --teal:#0f6e56;
+    --teal-bg:#e1f5ee;
+    --bg:#f4f6f9;
+    --card:#ffffff;
+    --border:#e1e5eb;
+    --text:#1c2733;
+    --text-sub:#5b6b7c;
+    --text-mute:#8b98a6;
+    --live:#3ddc97;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic",Roboto,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    display:flex;
+    flex-direction:column;
+  }
+  header{
+    background:linear-gradient(135deg,var(--navy),var(--navy-2));
+    color:#fff;
+    padding:18px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-shrink:0;
+  }
+  header h1{margin:0;font-size:18px;letter-spacing:.2px;}
+  header p{margin:2px 0 0;font-size:12px;color:#c7d3e0;}
+
+  .layout{
+    flex:1;
+    display:flex;
+    min-height:0; /* iframe이 늘어나지 않도록 */
+  }
+
+  nav.sidebar{
+    width:250px;
+    flex-shrink:0;
+    background:var(--card);
+    border-right:1px solid var(--border);
+    padding:14px 10px;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* 상단 그룹 전환 토글 */
+  .group-toggle{
+    display:flex;
+    gap:4px;
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:4px;
+    margin-bottom:12px;
+    flex-shrink:0;
+  }
+  .group-btn{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2px;
+    border:none;
+    background:none;
+    border-radius:7px;
+    padding:8px 4px;
+    font-size:11.5px;
+    font-weight:700;
+    color:var(--text-sub);
+    cursor:pointer;
+    line-height:1.3;
+  }
+  .group-btn .dot{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--live);
+    display:inline-block;
+    margin-right:3px;
+    box-shadow:0 0 0 2px rgba(61,220,151,.25);
+  }
+  .group-btn.active{background:var(--navy);color:#fff;}
+  .group-btn:not(.active):hover{background:var(--teal-bg);color:var(--teal);}
+
+  .menu-list{display:flex;flex-direction:column;}
+
+  .menu-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    width:100%;
+    text-align:left;
+    background:none;
+    border:none;
+    padding:12px 12px;
+    border-radius:8px;
+    font-size:14px;
+    color:var(--text);
+    cursor:pointer;
+    margin-bottom:4px;
+    transition:background .12s ease, color .12s ease;
+  }
+  .menu-item .icon{
+    width:30px;height:30px;
+    border-radius:8px;
+    background:var(--teal-bg);
+    color:var(--teal);
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;
+    flex-shrink:0;
+  }
+  .menu-item .label{display:flex;flex-direction:column;line-height:1.35;}
+  .menu-item .label small{font-size:11.5px;color:var(--text-mute);font-weight:400;}
+  .menu-item:hover{background:var(--teal-bg);}
+  .menu-item.active{background:var(--navy);color:#fff;}
+  .menu-item.active .icon{background:rgba(255,255,255,.15);color:#fff;}
+  .menu-item.active .label small{color:#c7d3e0;}
+
+  .content{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    background:var(--card);
+  }
+  .content iframe{
+    flex:1;
+    width:100%;
+    border:none;
+  }
+  .empty{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--text-mute);
+    font-size:14px;
+    text-align:center;
+    padding:20px;
+  }
+
+  @media (max-width: 720px){
+    .layout{flex-direction:column;}
+    nav.sidebar{
+      width:100%;
+      border-right:none;
+      border-bottom:1px solid var(--border);
+      max-height:none;
+    }
+    .menu-list{flex-direction:row;overflow-x:auto;gap:6px;}
+    .menu-item{white-space:nowrap;margin-bottom:0;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>청구백서</h1>
+    <p>왼쪽에서 항목을 선택하면 오른쪽에 바로 표시됩니다</p>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="group-toggle" id="groupToggle"></div>
+    <div class="menu-list" id="sidebar"></div>
+  </nav>
+  <div class="content" id="content">
+    <div class="empty" id="empty">왼쪽 메뉴에서 조회할 항목을 선택하세요</div>
+    <iframe id="viewer" style="display:none;"></iframe>
+  </div>
+</div>
+
+<script>
+  // 그룹을 나눠서 관리합니다. "실시간 공유"는 Firebase로 팀원과 함께 보는 도구,
+  // "개별 도구"는 로컬 저장만 되는 도구입니다.
+  // 도구를 추가할 때는 해당 그룹의 items 배열에 항목 하나만 넣으면 됩니다.
+  const groups = [
+    {
+      key: "live",
+      label: "실시간 공유",
+      live: true,
+      items: [
+        {
+          icon: "💬",
+          title: "보험심사 청구 Q&A",
+          desc: "팀원 실시간 공유 게시판",
+          href: "insurance-review-qa.html"
+        },
+        {
+          icon: "💊",
+          title: "당뇨병 경구약제 병용요법",
+          desc: "급여기준 조회 (실시간 공유)",
+          href: "diabetes-combo-tool.html"
+        }
+      ]
+    },
+    {
+      key: "local",
+      label: "심사기준",
+      live: false,
+      items: [
+        {
+          icon: "%",
+          title: "본인부담율 통합관리",
+          desc: "의원급 진료",
+          href: "copay-rate-tool.html"
+        },
+        {
+          icon: "🏥",
+          title: "시범사업",
+          desc: "가정간호·방문진료·만성질환 등 통합정리",
+          href: "pilot-programs.html"
+        },
+        {
+          icon: "🩺",
+          title: "질병군(DRG) 분류 조회",
+          desc: "주진단·수술코드",
+          href: "drg-search.html"
+        }
+        // 예시) 새 항목 추가 시:
+        // { icon: "📄", title: "새 도구 이름", desc: "설명", href: "new-tool.html" }
+      ]
+    }
+  ];
+
+  const groupToggle = document.getElementById('groupToggle');
+  const sidebar = document.getElementById('sidebar');
+  const viewer = document.getElementById('viewer');
+  const empty = document.getElementById('empty');
+
+  let activeGroupKey = groups[0].key;
+  let activeHref = null;
+
+  function renderGroupToggle(){
+    groupToggle.innerHTML = '';
+    groups.forEach(g => {
+      const btn = document.createElement('button');
+      btn.className = 'group-btn' + (g.key === activeGroupKey ? ' active' : '');
+      btn.innerHTML = (g.live ? '<span class="dot"></span>' : '') + g.label + ` (${g.items.length})`;
+      btn.addEventListener('click', () => {
+        activeGroupKey = g.key;
+        renderGroupToggle();
+        renderMenuList();
+      });
+      groupToggle.appendChild(btn);
+    });
+  }
+
+  function selectTool(item, btn){
+    document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+    btn.classList.add('active');
+    empty.style.display = 'none';
+    viewer.style.display = 'block';
+    if(activeHref !== item.href){
+      activeHref = item.href;
+      viewer.src = item.href;
+    }
+  }
+
+  function renderMenuList(){
+    const group = groups.find(g => g.key === activeGroupKey);
+    sidebar.innerHTML = '';
+    group.items.forEach((t) => {
+      const btn = document.createElement('button');
+      btn.className = 'menu-item' + (t.href === activeHref ? ' active' : '');
+      btn.innerHTML = `
+        <div class="icon">${t.icon}</div>
+        <div class="label">${t.title}<small>${t.desc}</small></div>
+      `;
+      btn.addEventListener('click', () => selectTool(t, btn));
+      sidebar.appendChild(btn);
+    });
+  }
+
+  renderGroupToggle();
+  renderMenuList();
+
+  // 첫 화면에서 첫 번째 항목(실시간 공유 그룹의 첫 도구) 자동 오픈
+  // 원치 않으면 아래 두 줄 삭제
+  const first = sidebar.querySelector('.menu-item');
+  if(first) first.click();
+</script>
+
+</body>
+</html>
