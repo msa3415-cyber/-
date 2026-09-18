@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>당뇨병 경구약제 병용요법 급여기준 조회</title>
+<!-- Firebase SDK: 보험심사 청구 Q&A와 동일한 프로젝트를 재사용합니다 -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
   :root{
     --navy:#0f2a4a;
@@ -143,8 +146,53 @@
     font-size:13.5px;font-family:inherit;color:var(--text);
   }
   .field textarea{resize:vertical;min-height:56px;}
+  .picker-select{margin-bottom:6px;background:var(--bg);color:var(--text-mute);font-size:12.5px;}
+  .picker-select:focus{color:var(--text);}
   .field .err{color:var(--red);font-size:12px;margin-top:5px;display:none;}
   .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;}
+
+  /* 근거 캡쳐 이미지 첨부 + OCR */
+  .btn-sm{padding:6px 10px;font-size:12px;border-radius:7px;}
+  .btn.ghost2{background:#fff;border:1px solid var(--border);color:var(--text-sub);}
+  .btn.ghost2:hover{background:var(--teal-bg);color:var(--teal);border-color:#bfe3d8;}
+  .btn.danger-ghost{background:#fff;border:1px solid var(--border);color:var(--red);}
+  .btn.danger-ghost:hover{background:var(--red-bg);}
+  .img-drop{border:1.5px dashed var(--border);border-radius:10px;background:var(--bg);transition:border-color .12s ease,background .12s ease;}
+  .img-drop.dragover{border-color:var(--teal);background:var(--teal-bg);}
+  .img-drop-empty{padding:18px 14px;text-align:center;color:var(--text-mute);font-size:12.5px;cursor:pointer;line-height:1.6;}
+  .img-preview{padding:10px;}
+  .img-preview img{max-width:100%;max-height:220px;border-radius:8px;border:1px solid var(--border);display:block;}
+  .img-preview-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .img-preview-bar .img-size{font-size:11.5px;color:var(--text-mute);}
+  .img-preview-bar > div{display:flex;gap:6px;flex-wrap:wrap;}
+  .ocr-panel{margin-top:10px;border:1px solid var(--border);border-radius:10px;padding:10px;background:#fff;}
+  .ocr-panel-head{font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:6px;}
+  .ocr-panel textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:inherit;resize:vertical;}
+  .ocr-insert-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .img-lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:200;padding:24px;}
+  .img-lightbox.open{display:flex;}
+  .img-lightbox img{max-width:96vw;max-height:90vh;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,0.5);}
+  .img-lightbox .lb-close{position:absolute;top:16px;right:20px;background:rgba(255,255,255,0.15);border:none;color:#fff;width:38px;height:38px;border-radius:50%;font-size:18px;cursor:pointer;}
+  .img-lightbox .lb-close:hover{background:rgba(255,255,255,0.28);}
+  .evidence-btn{display:inline-flex;align-items:center;gap:4px;margin-top:8px;background:var(--teal-bg);border:1px solid #bfe3d8;color:var(--teal);border-radius:7px;padding:4px 10px;font-size:11.5px;font-weight:600;cursor:pointer;}
+  .evidence-btn:hover{background:#d3ecec;}
+
+  .rich-toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:10px;}
+  .rich-toolbar .rt-hint{font-size:11px;color:var(--text-mute);width:100%;margin-bottom:2px;}
+  .rt-btn{width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;font-size:13px;color:var(--text);display:flex;align-items:center;justify-content:center;line-height:1;}
+  .rt-btn:hover{background:#eef1f5;}
+  .rt-divider{width:1px;height:20px;background:var(--border);margin:0 2px;}
+  .rt-color{width:22px;height:22px;border-radius:50%;border:1px solid rgba(0,0,0,0.12);cursor:pointer;padding:0;flex:none;}
+  .rt-color:hover{transform:scale(1.12);}
+  .rt-color.rt-clear{background:#fff;color:var(--text-mute);font-size:11px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);}
+  .rich-input{
+    width:100%;min-height:38px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;
+    font-size:13.5px;font-family:inherit;color:var(--text);background:#fff;line-height:1.5;
+  }
+  .rich-input:focus{outline:2px solid var(--teal);outline-offset:-1px;}
+  .rich-input[data-multiline]{min-height:64px;}
+  .rich-input.is-empty:before{content:attr(data-placeholder);color:var(--text-mute);pointer-events:none;}
+  .rich-input b,.rich-input strong{font-weight:700;}
   .toast{
     position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;
     padding:10px 18px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;
@@ -198,6 +246,38 @@
   .combo-summary{font-size:14px;font-weight:700;color:var(--navy);padding:12px 14px;background:var(--teal-bg);border-radius:9px;margin-bottom:14px;}
   .combo-summary .empty-hint{font-weight:500;color:var(--text-mute);font-size:13px;}
 
+  .checker-history{margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);}
+  .history-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+  .history-head .title{font-size:12px;font-weight:700;color:var(--text-sub);}
+  .history-head .hcount{font-weight:500;color:var(--text-mute);font-size:11px;}
+  .history-head-actions{display:flex;gap:12px;align-items:center;}
+  .history-link{background:none;border:none;color:var(--teal);font-size:11.5px;cursor:pointer;text-decoration:underline;padding:0;font-weight:600;}
+  .history-link:hover{color:var(--navy);}
+  .history-clear{background:none;border:none;color:var(--text-mute);font-size:11.5px;cursor:pointer;text-decoration:underline;padding:0;}
+  .history-clear:hover{color:var(--red);}
+  .history-more{background:none;border:1px dashed var(--border);color:var(--text-sub);border-radius:20px;padding:5px 12px;font-size:11.5px;cursor:pointer;font-weight:600;}
+  .history-more:hover{background:var(--teal-bg);color:var(--teal);border-color:#bfe3d8;}
+  .hist-modal-list{max-height:60vh;overflow-y:auto;margin-bottom:6px;}
+  .hist-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 4px;border-bottom:1px solid var(--border);}
+  .hist-row:last-child{border-bottom:none;}
+  .hist-row-main{min-width:0;flex:1;}
+  .hist-row-label{font-size:13px;font-weight:700;color:var(--navy);}
+  .hist-row-names{font-size:11.5px;color:var(--text-mute);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .hist-row-time{font-size:11px;color:var(--text-mute);margin-top:3px;}
+  .hist-row-actions{display:flex;gap:6px;flex:none;}
+  .history-list{display:flex;flex-wrap:wrap;gap:8px;}
+  .history-chip{
+    display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border);
+    color:var(--navy);padding:5px 6px 5px 11px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;
+    transition:background .12s ease,border-color .12s ease;
+  }
+  .history-chip:hover{background:var(--teal-bg);border-color:#bfe3d8;}
+  .history-chip .hc-del{
+    background:rgba(0,0,0,0.06);border:none;color:var(--text-mute);border-radius:50%;
+    width:17px;height:17px;cursor:pointer;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;flex:none;
+  }
+  .history-chip .hc-del:hover{background:var(--red);color:#fff;}
+
   .matrix-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:18px;overflow-x:auto;}
   .matrix-title{font-size:13.5px;font-weight:700;color:var(--navy);margin:0 0 4px;}
   .matrix-sub{font-size:11.5px;color:var(--text-mute);margin:0 0 12px;}
@@ -216,6 +296,10 @@
     <p class="eyebrow">SeeChart · 심사청구파트</p>
     <h1>당뇨병 경구약제 병용요법 급여기준 조회</h1>
     <p>2025년 5월 1일 기준 당뇨병 경구약제 및 인슐린·GLP-1 주사제 병용처방 급여 인정 조합을 검색하고, 고시 개정에 따라 직접 수정·추가할 수 있습니다.</p>
+    <p style="margin-top:10px;font-size:12px;color:#c7d5e6;display:flex;align-items:center;gap:6px;">
+      <span id="syncDot" style="width:8px;height:8px;border-radius:50%;background:#aaa;display:inline-block;flex-shrink:0;"></span>
+      <span id="syncMsg">⏳ 팀 실시간 공유 연결 중...</span>
+    </p>
   </header>
 
   <div class="main-tabs">
@@ -270,6 +354,7 @@
       <div class="picker-results" id="checkerResults"></div>
       <div class="selected-chips" id="checkerChips"></div>
       <button class="btn" id="checkerClearBtn">선택 초기화</button>
+      <div class="checker-history" id="checkerHistory"></div>
     </div>
     <div id="checkerSummary"></div>
     <div id="checkerResultRoot"></div>
@@ -286,14 +371,29 @@
   <div class="modal">
     <h2 id="modalTitle">조합 추가</h2>
     <p class="sub">병용요법 조합 정보를 입력하세요.</p>
+
+    <div class="rich-toolbar">
+      <span class="rt-hint">아래 입력칸에서 글자를 드래그해 선택한 후 버튼을 누르면 굵게/색상이 적용됩니다.</span>
+      <button type="button" class="rt-btn" id="rtBold" title="굵게 (선택 영역에 적용)"><b>B</b></button>
+      <span class="rt-divider"></span>
+      <button type="button" class="rt-color" data-color="#c23b3b" style="background:#c23b3b" title="빨강"></button>
+      <button type="button" class="rt-color" data-color="#0f6e56" style="background:#0f6e56" title="초록"></button>
+      <button type="button" class="rt-color" data-color="#a15c00" style="background:#a15c00" title="주황"></button>
+      <button type="button" class="rt-color" data-color="#0f2a4a" style="background:#0f2a4a" title="남색"></button>
+      <button type="button" class="rt-color" data-color="#6b3fa0" style="background:#6b3fa0" title="보라"></button>
+      <button type="button" class="rt-color rt-clear" data-color="" title="서식 지우기">✕</button>
+    </div>
+
     <div class="field">
       <label>조합(구성 약제) *</label>
-      <input id="f_cat" type="text" placeholder="예: MET + SGLT2i">
+      <select id="f_catPicker" class="picker-select"></select>
+      <div class="rich-input" id="f_cat" contenteditable="true" data-placeholder="예: MET + SGLT2i"></div>
       <div class="err" id="err_cat">조합명을 입력해 주세요.</div>
     </div>
     <div class="field">
       <label>상세 성분 조합 / 조건</label>
-      <input id="f_cond" type="text" placeholder="예: Enavogliflozin 제외, Sitagliptin+Dapagliflozin* 등">
+      <select id="f_condPicker" class="picker-select"></select>
+      <div class="rich-input" id="f_cond" contenteditable="true" data-placeholder="예: Enavogliflozin 제외, Sitagliptin+Dapagliflozin* 등"></div>
     </div>
     <div class="field">
       <label>분류 *</label>
@@ -301,12 +401,39 @@
     </div>
     <div class="field">
       <label>급여 구분 *</label>
-      <input id="f_rate" type="text" placeholder="예: 급여인정 / 2개 중 저렴한 약 1개 전액본인부담 / 불인정">
+      <div class="rich-input" id="f_rate" contenteditable="true" data-placeholder="예: 급여인정 / 2개 중 저렴한 약 1개 전액본인부담 / 불인정"></div>
       <div class="err" id="err_rate">급여 구분을 입력해 주세요.</div>
     </div>
     <div class="field">
       <label>비고</label>
-      <textarea id="f_note" placeholder="예: 다른 조합은 인정되지 않음"></textarea>
+      <div class="rich-input" id="f_note" contenteditable="true" data-multiline data-placeholder="예: 다른 조합은 인정되지 않음"></div>
+    </div>
+    <div class="field">
+      <label>근거 캡쳐 이미지 (블로그·고시 캡쳐 등)</label>
+      <div class="img-drop" id="imgDrop">
+        <input type="file" id="imgInput" accept="image/*" hidden>
+        <div class="img-drop-empty" id="imgDropEmpty">📷 이미지를 여기로 끌어놓거나, 클릭해서 선택하거나, 붙여넣기(Ctrl+V) 하세요</div>
+        <div class="img-preview" id="imgPreview" style="display:none;">
+          <img id="imgPreviewImg" src="" alt="근거 캡쳐">
+          <div class="img-preview-bar">
+            <span class="img-size" id="imgSizeNote"></span>
+            <div>
+              <button type="button" class="btn btn-sm btn-primary" id="ocrBtn">글자 추출(OCR)</button>
+              <button type="button" class="btn btn-sm danger-ghost" id="imgRemoveBtn">이미지 삭제</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="ocr-panel" id="ocrResult" style="display:none;">
+        <div class="ocr-panel-head">추출된 글자 — 필요한 부분만 남기고 아래 버튼으로 원하는 칸에 넣으세요</div>
+        <textarea id="ocrText" rows="4" placeholder="OCR 결과가 여기에 표시됩니다."></textarea>
+        <div class="ocr-insert-row">
+          <button type="button" class="btn btn-sm ghost2" data-ocr-field="f_cat">→ 조합칸에</button>
+          <button type="button" class="btn btn-sm ghost2" data-ocr-field="f_cond">→ 상세성분칸에</button>
+          <button type="button" class="btn btn-sm ghost2" data-ocr-field="f_rate">→ 급여구분칸에</button>
+          <button type="button" class="btn btn-sm ghost2" data-ocr-field="f_note">→ 비고칸에</button>
+        </div>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn" id="cancelBtn">취소</button>
@@ -357,6 +484,23 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<div class="img-lightbox" id="imgLightbox">
+  <button class="lb-close" id="imgLightboxClose" aria-label="닫기">✕</button>
+  <img id="imgLightboxImg" src="" alt="근거 캡쳐 원본">
+</div>
+
+<div class="modal-bg" id="historyModalBg">
+  <div class="modal">
+    <h2>전체 조회 이력</h2>
+    <p class="sub">이전에 조회한 조합을 다시 불러오거나 삭제할 수 있습니다. (이 브라우저에만 저장됨)</p>
+    <div class="hist-modal-list" id="historyModalList"></div>
+    <div class="modal-actions" style="justify-content:space-between;">
+      <button class="btn danger-ghost" id="historyModalClearBtn">전체 삭제</button>
+      <button class="btn" id="historyModalCloseBtn">닫기</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const STORAGE_KEY = 'diabetes-combo-items-v1';
@@ -422,6 +566,10 @@ const DEFAULT_DATA = [
   {id:'q5', group:'4제 병용요법', cat:'MET + TZD + SGLT2i + DPP4i*', cond:'met+tzd+dapa+sita*', rate:'DPP4i 전액본인부담', note:'다른 조합은 가능하지 않음'},
   {id:'q6', group:'4제 병용요법', cat:'MET + TZD + DPP4i + SGLT2i*', cond:'met+pio+sita+dapa*', rate:'SGLT2i 전액본인부담', note:'다른 조합은 가능하지 않음'},
   {id:'q7', group:'4제 병용요법', cat:'SU + TZD + DPP4i + SGLT2i*', cond:'su+pio+sita+dapa*', rate:'SGLT2i(dapa) 전액본인부담', note:'다른 조합은 가능하지 않음'},
+  {id:'q8', group:'4제 병용요법', cat:'MET + SU + SGLT2i + TZD*', cond:'met+su+dapa+pio*', rate:'TZD(Pio) 전액본인부담', note:'급여 3제(MET+SU+SGLT2i)에 TZD를 전액본인부담으로 추가한 조합'},
+  {id:'q9', group:'4제 병용요법', cat:'MET + SU + SGLT2i + DPP4i*', cond:'met+su+dapa+sita* / met+su+ertu+sita*', rate:'DPP4i 전액본인부담', note:'급여 3제(MET+SU+SGLT2i)에 DPP4i를 전액본인부담으로 추가한 조합'},
+  {id:'q10', group:'4제 병용요법', cat:'MET + SU + TZD + SGLT2i*', cond:'met+su+pio+dapa*', rate:'SGLT2i(dapa) 전액본인부담', note:'급여 3제(MET+SU+TZD)에 SGLT2i를 전액본인부담으로 추가한 조합'},
+  {id:'q11', group:'4제 병용요법', cat:'MET + SU + DPP4i + SGLT2i*', cond:'met+su+sita+dapa* / met+su+sita+ertu*', rate:'SGLT2i 전액본인부담', note:'급여 3제(MET+SU+DPP4i)에 SGLT2i를 전액본인부담으로 추가한 조합'},
 
 
   {id:'g1', group:'GLP-1 병용요법 - 오젬픽(Semaglutide)', cat:'단독 처방', cond:'', rate:'불가', note:'오젬픽은 전액본인부담 처리도 불가하여 단독 처방 자체가 안 됨(타 GLP-1 제제와 다른 점)'},
@@ -530,7 +678,7 @@ function normalizeToken(tok){
   return tok.toUpperCase();
 }
 function parseClassesFromCat(cat){
-  return (cat||'').split('+').map(normalizeToken).filter(Boolean);
+  return stripTags(cat).split('+').map(normalizeToken).filter(Boolean);
 }
 function classSetKey(arr){
   return Array.from(new Set(arr)).sort().join(',');
@@ -2532,6 +2680,132 @@ const DEFAULT_DRUGS = [
 let items = [];
 let activeGroup = '전체';
 let editingId = null;
+let editingImg = ''; // 조합 추가/수정 모달에서 첨부 중인 근거 캡쳐 이미지(base64, 팀 공유 저장됨)
+
+// ════════════════════════════════════════════
+// 🔥 Firebase 설정값 — 보험심사 청구 Q&A 페이지와 동일한 프로젝트를 재사용합니다.
+// 같은 프로젝트라도 저장 경로(diabetesItems / diabetesDrugs)가 달라서
+// Q&A 데이터(qaItems)와 서로 섞이지 않습니다.
+// ════════════════════════════════════════════
+const FB_CONFIG = {
+  apiKey:      "AIzaSyDF3QP6dOmDRUhoh05Vju9P1AUusyyhK2g",
+  databaseURL: "https://insurance-qa-90ec2-default-rtdb.firebaseio.com",
+  projectId:   "insurance-qa-90ec2",
+  appId:       "1:393463415123:web:7d5b84fe54313298c061a6"
+};
+
+let firebaseApp   = null;
+let firebaseDB    = null;
+let fbItemsRef    = null;
+let fbDrugsRef    = null;
+let fbConnected   = false;
+let fbInitialized = false;
+
+function setSyncUI(state){
+  const dot = document.getElementById('syncDot');
+  const msg = document.getElementById('syncMsg');
+  if(!dot || !msg) return;
+  if(state === 'on'){
+    dot.style.background = '#3ecf8e';
+    msg.textContent = '🔥 팀 실시간 공유 중';
+  } else if(state === 'connecting'){
+    dot.style.background = '#e0b73a';
+    msg.textContent = '⏳ 팀 실시간 공유 연결 중...';
+  } else {
+    dot.style.background = '#aaa';
+    msg.textContent = '⚠ 오프라인 (이 브라우저에만 저장됨)';
+  }
+}
+
+async function initFirebase(){
+  if(fbInitialized) return;
+  try{
+    if(firebase.apps && firebase.apps.length > 0){
+      await Promise.all(firebase.apps.map(a=>a.delete()));
+    }
+  }catch(e){}
+
+  firebaseApp = firebase.initializeApp(FB_CONFIG);
+  firebaseDB  = firebaseApp.database();
+  fbItemsRef  = firebaseDB.ref('diabetesItems');
+  fbDrugsRef  = firebaseDB.ref('diabetesDrugs');
+  fbInitialized = true;
+
+  firebaseDB.ref('.info/connected').on('value', snap=>{
+    fbConnected = snap.val() === true;
+    setSyncUI(fbConnected ? 'on' : 'connecting');
+  });
+
+  // 병용요법 기준(items) 실시간 동기화
+  fbItemsRef.on('value', snap=>{
+    const raw = snap.val();
+    if(raw){
+      items = Object.values(raw);
+      render();
+      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }catch(e){}
+    } else if(items.length){
+      // Firebase에 아직 데이터가 없으면(팀 최초 연결) 현재 데이터를 1회 업로드해 기준선을 만듭니다.
+      pushItemsToFirebase();
+    }
+  }, err=>{
+    console.error('Firebase(diabetesItems) 읽기 오류:', err);
+    setSyncUI('off');
+  });
+
+  // 약제 목록(drugs) 실시간 동기화
+  fbDrugsRef.on('value', snap=>{
+    const raw = snap.val();
+    if(raw){
+      drugs = Object.values(raw);
+      renderDrugsTab();
+      if(activeMainTab === 'checker') renderChecker();
+      try{ localStorage.setItem(DRUG_STORAGE_KEY, JSON.stringify(drugs)); }catch(e){}
+    } else if(drugs.length){
+      pushDrugsToFirebase();
+    }
+  }, err=>{
+    console.error('Firebase(diabetesDrugs) 읽기 오류:', err);
+  });
+}
+
+function pushItemsToFirebase(){
+  if(!fbItemsRef) return Promise.resolve(false);
+  const obj = {};
+  items.forEach(it=>{ obj[String(it.id)] = it; });
+  return fbItemsRef.set(obj).then(()=>true).catch(e=>{
+    console.error('Firebase(diabetesItems) 저장 오류:', e);
+    return false;
+  });
+}
+
+function pushDrugsToFirebase(){
+  if(!fbDrugsRef) return Promise.resolve(false);
+  const obj = {};
+  drugs.forEach(d=>{ obj[String(d.id)] = d; });
+  return fbDrugsRef.set(obj).then(()=>true).catch(e=>{
+    console.error('Firebase(diabetesDrugs) 저장 오류:', e);
+    return false;
+  });
+}
+
+// Claude 아티팩트로 열렸을 때는 window.storage(팀 공용 저장소)를 쓰고,
+// GitHub Pages 등 일반 정적 호스팅으로 열렸을 때는 window.storage가 없으므로
+// 이 브라우저에만 저장되는 localStorage로 자동 대체한다(팀원 간 실시간 공유는 안 됨).
+const HAS_ARTIFACT_STORAGE = (typeof window !== 'undefined') && window.storage &&
+  typeof window.storage.get === 'function' && typeof window.storage.set === 'function';
+
+const storageAdapter = {
+  async get(key, shared){
+    if(HAS_ARTIFACT_STORAGE) return await window.storage.get(key, shared);
+    const raw = localStorage.getItem(key);
+    return raw === null ? null : {key, value: raw, shared: !!shared};
+  },
+  async set(key, value, shared){
+    if(HAS_ARTIFACT_STORAGE) return await window.storage.set(key, value, shared);
+    localStorage.setItem(key, value);
+    return {key, value, shared: !!shared};
+  }
+};
 
 function toast(msg){
   const t = document.getElementById('toast');
@@ -2542,7 +2816,7 @@ function toast(msg){
 
 async function loadItems(){
   try{
-    const res = await window.storage.get(STORAGE_KEY, true);
+    const res = await storageAdapter.get(STORAGE_KEY, true);
     if(res && res.value){
       items = JSON.parse(res.value);
     } else {
@@ -2556,10 +2830,29 @@ async function loadItems(){
 }
 
 async function persist(){
+  let localOk = true;
   try{
-    await window.storage.set(STORAGE_KEY, JSON.stringify(items), true);
+    await storageAdapter.set(STORAGE_KEY, JSON.stringify(items), true);
   }catch(e){
-    toast('저장에 실패했습니다. 다시 시도해 주세요.');
+    localOk = false;
+    console.error('로컬 저장 오류:', e && e.name, e && e.message);
+  }
+
+  let fbOk = null; // null = 실시간 공유에 연결되어 있지 않아 시도 자체를 안 함
+  if(fbConnected && fbItemsRef){
+    fbOk = await pushItemsToFirebase();
+  }
+
+  // 실시간 공유(Firebase)가 메인 저장소이므로, 공유 저장에 성공했다면
+  // 이 브라우저만의 로컬 백업이 실패했어도 사용자에게 실패로 보이지 않게 한다.
+  if(!localOk && fbOk !== true){
+    if(fbOk === false){
+      toast('저장에 실패했습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.');
+    } else {
+      toast('실시간 공유가 연결되어 있지 않아 이 브라우저에만 저장하지 못했습니다. 새로고침 후 다시 시도해 주세요.');
+    }
+  } else if(localOk && fbConnected && fbOk === false){
+    toast('이 브라우저에는 저장됐지만 팀 공유 저장소 반영에는 실패했습니다. 잠시 후 다시 시도해 주세요.');
   }
 }
 
@@ -2574,7 +2867,7 @@ function renderChips(){
 
 function matchesSearch(item, q){
   if(!q) return true;
-  const hay = [item.cat, item.cond, item.rate, item.note].join(' ').toLowerCase();
+  const hay = [item.cat, item.cond, item.rate, item.note].map(stripTags).join(' ').toLowerCase();
   return hay.includes(q.toLowerCase());
 }
 
@@ -2582,14 +2875,78 @@ function escapeHtml(s){
   return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+// 조합 텍스트 필드(cat/cond/rate/note)는 굵게/색상 서식이 포함된 HTML을 저장할 수 있다.
+// stripTags: 검색/파싱 등 "순수 텍스트"가 필요한 로직에서 서식 태그를 제거하고 텍스트만 뽑아낸다.
+function stripTags(html){
+  if(!html) return '';
+  const d = document.createElement('div');
+  d.innerHTML = html;
+  return d.textContent || d.innerText || '';
+}
+
+// sanitizeRichHtml: contenteditable에서 나온 HTML을 <span style="color:...;font-weight:bold;">/<br> 만 남기고
+// 나머지 태그·속성은 전부 제거해서 저장한다(공유 저장소에 들어가는 값이라 안전하게 정리).
+//
+// 굵게 버튼과 색상 버튼을 누르는 "순서"에 따라 브라우저가 서식을 담는 태그가 달라진다.
+//   - 색상 먼저 → 굵게: <span style="color:...;font-weight:bold;">
+//   - 굵게 먼저 → 색상: <b style="color:...;">
+// 어느 쪽이든 색상(color)과 굵게(bold) 여부를 태그 종류와 상관없이 함께 추출해서
+// 항상 <span style="color:...;font-weight:bold;">로 통일해 저장해야 서식이 사라지지 않는다.
+function sanitizeRichHtml(html){
+  const allowed = new Set(['B','STRONG','SPAN','BR']);
+  const container = document.createElement('div');
+  container.innerHTML = html || '';
+
+  function walk(node){
+    Array.from(node.childNodes).forEach(child=>{
+      if(child.nodeType === Node.ELEMENT_NODE){
+        walk(child); // 먼저 내부부터 정리
+        if(!allowed.has(child.tagName)){
+          while(child.firstChild) node.insertBefore(child.firstChild, child);
+          node.removeChild(child);
+        } else {
+          const style = child.style;
+          const color = style && style.color;
+          const weight = style && style.fontWeight;
+          const isBold = child.tagName === 'B' || child.tagName === 'STRONG' ||
+            weight === 'bold' || weight === 'bolder' || (parseInt(weight, 10) >= 600);
+
+          if(!color && !isBold){
+            // 서식이 전혀 없는 태그는 그냥 풀어준다 (예: 색상 없는 빈 span)
+            while(child.firstChild) node.insertBefore(child.firstChild, child);
+            node.removeChild(child);
+            return;
+          }
+
+          // 태그 종류에 상관없이 <span>으로 통일해서 색상·굵게를 함께 보존한다.
+          const span = document.createElement('span');
+          if(color) span.style.color = color;
+          if(isBold) span.style.fontWeight = 'bold';
+          while(child.firstChild) span.appendChild(child.firstChild);
+          child.replaceWith(span);
+        }
+      } else if(child.nodeType !== Node.TEXT_NODE){
+        node.removeChild(child);
+      }
+    });
+  }
+  walk(container);
+  return container.innerHTML;
+}
+
+function isRichEmpty(html){
+  const t = stripTags(html).replace(/\u200b/g,'').trim();
+  return t.length === 0;
+}
+
 function pillClass(it){
   if(it.deny) return 'deny';
-  if((it.rate||'').includes('전액본인부담')) return 'oop';
+  if(stripTags(it.rate).includes('전액본인부담')) return 'oop';
   return '';
 }
 function cardClass(it){
   if(it.deny) return 'deny';
-  if((it.rate||'').includes('전액본인부담')) return 'oop';
+  if(stripTags(it.rate).includes('전액본인부담')) return 'oop';
   return '';
 }
 
@@ -2676,12 +3033,13 @@ function render(){
       html += `
         <div class="item-card ${cardClass(it)}" data-id="${it.id}">
           <div class="item-main">
-            <p class="cat">${escapeHtml(it.cat)}</p>
-            ${it.cond ? `<p class="cond">${escapeHtml(it.cond)}</p>` : ''}
+            <p class="cat">${it.cat}</p>
+            ${!isRichEmpty(it.cond) ? `<p class="cond">${it.cond}</p>` : ''}
             <div class="rate-row">
-              <span class="rate-pill ${pillClass(it)}">${escapeHtml(it.rate)}</span>
+              <span class="rate-pill ${pillClass(it)}">${it.rate}</span>
             </div>
-            ${it.note ? `<p class="item-note">${escapeHtml(it.note)}</p>` : ''}
+            ${!isRichEmpty(it.note) ? `<p class="item-note">${it.note}</p>` : ''}
+            ${it.img ? `<button class="evidence-btn" data-act="img" data-id="${it.id}">📷 근거 캡쳐 보기</button>` : ''}
           </div>
           <div class="item-actions">
             <button class="icon-btn" data-act="edit" data-id="${it.id}" aria-label="수정">
@@ -2707,51 +3065,293 @@ function populateGroupSelect(){
   if(activeGroup!=='전체') sel.value = activeGroup;
 }
 
+// "조합(구성 약제)"/"상세 성분 조합" 필드는 자유 입력이 필요하지만, 이미 등록된 조합을
+// 그대로 다시 쓰거나 살짝만 바꿔서 추가하는 경우가 많아 기존 값에서 바로 고를 수 있게 한다.
+// 선택하면 해당 값의 서식(굵게/색상)까지 그대로 입력칸에 채워진다.
+function uniqueRichValues(getter){
+  const seen = new Set();
+  const list = [];
+  items.forEach(it=>{
+    const raw = getter(it);
+    const text = stripTags(raw).trim();
+    if(!text || seen.has(text)) return;
+    seen.add(text);
+    list.push(raw);
+  });
+  list.sort((a,b)=>stripTags(a).localeCompare(stripTags(b), 'ko'));
+  return list;
+}
+
+function populateRichPicker(selectId, values, placeholder){
+  const sel = document.getElementById(selectId);
+  sel.innerHTML = [`<option value="">${escapeHtml(placeholder)}</option>`]
+    .concat(values.map((raw,i)=>`<option value="${i}">${escapeHtml(stripTags(raw))}</option>`))
+    .join('');
+  sel._rawValues = values;
+  sel.value = '';
+}
+
+function wireRichPicker(selectId, fieldId){
+  const sel = document.getElementById(selectId);
+  sel.addEventListener('change', ()=>{
+    if(sel.value === '') return;
+    const raw = sel._rawValues[Number(sel.value)];
+    setRichField(fieldId, raw);
+    sel.value = ''; // 선택은 "채워 넣기" 동작일 뿐, 실제 값은 아래 입력칸이 기준이라 되돌려 놓는다
+  });
+}
+wireRichPicker('f_catPicker', 'f_cat');
+wireRichPicker('f_condPicker', 'f_cond');
+
+function setRichField(id, html){
+  const el = document.getElementById(id);
+  el.innerHTML = html || '';
+  updateRichEmptyState(el);
+}
+
+function updateRichEmptyState(el){
+  el.classList.toggle('is-empty', isRichEmpty(el.innerHTML));
+}
+
 function openModal(id){
   editingId = id || null;
   populateGroupSelect();
+  populateRichPicker('f_catPicker', uniqueRichValues(it=>it.cat), '기존 조합에서 선택 (또는 아래에 새로 입력)');
+  populateRichPicker('f_condPicker', uniqueRichValues(it=>it.cond), '기존 성분 조합/조건에서 선택 (또는 아래에 새로 입력)');
   document.getElementById('err_cat').style.display='none';
   document.getElementById('err_rate').style.display='none';
 
   if(id){
     const it = items.find(x=>x.id===id);
     document.getElementById('modalTitle').textContent = '조합 수정';
-    document.getElementById('f_cat').value = it.cat;
-    document.getElementById('f_cond').value = it.cond||'';
+    setRichField('f_cat', it.cat);
+    setRichField('f_cond', it.cond||'');
     document.getElementById('f_group').value = it.group;
-    document.getElementById('f_rate').value = it.rate;
-    document.getElementById('f_note').value = it.note||'';
+    setRichField('f_rate', it.rate);
+    setRichField('f_note', it.note||'');
+    editingImg = it.img || '';
   } else {
     document.getElementById('modalTitle').textContent = '조합 추가';
-    document.getElementById('f_cat').value = '';
-    document.getElementById('f_cond').value = '';
-    document.getElementById('f_rate').value = '';
-    document.getElementById('f_note').value = '';
+    setRichField('f_cat', '');
+    setRichField('f_cond', '');
+    setRichField('f_rate', '');
+    setRichField('f_note', '');
+    editingImg = '';
   }
+  renderImagePreview();
+  document.getElementById('ocrResult').style.display = 'none';
+  document.getElementById('ocrText').value = '';
   document.getElementById('modalBg').classList.add('open');
 }
 
 function closeModal(){
   document.getElementById('modalBg').classList.remove('open');
   editingId = null;
+  editingImg = '';
 }
 
+/* ---- 근거 캡쳐 이미지 첨부 + OCR ---- */
+
+// 이미지는 팀 공유(Firebase)에 함께 저장되므로 원본을 그대로 넣으면 용량이 커진다.
+// 캔버스로 최대 크기를 줄이고 JPEG로 압축해서 저장 용량을 줄인다.
+function fileToDownscaledDataURL(fileOrBlob, maxDim, quality){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = e=>{
+      const img = new Image();
+      img.onload = ()=>{
+        let w = img.naturalWidth, h = img.naturalHeight;
+        if(Math.max(w,h) > maxDim){
+          const s = maxDim / Math.max(w,h);
+          w = Math.round(w*s); h = Math.round(h*s);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0,0,w,h); // 투명 배경이 검게 나오는 것 방지
+        ctx.drawImage(img, 0, 0, w, h);
+        try{ resolve(canvas.toDataURL('image/jpeg', quality)); }
+        catch(err){ reject(err); }
+      };
+      img.onerror = ()=>reject(new Error('이미지를 읽을 수 없습니다.'));
+      img.src = e.target.result;
+    };
+    reader.onerror = ()=>reject(new Error('파일을 읽을 수 없습니다.'));
+    reader.readAsDataURL(fileOrBlob);
+  });
+}
+
+async function setImageFromFile(fileOrBlob){
+  if(!fileOrBlob || !/^image\//.test(fileOrBlob.type||'')){ toast('이미지 파일만 올릴 수 있습니다.'); return; }
+  try{
+    let dataUrl = await fileToDownscaledDataURL(fileOrBlob, 1400, 0.72);
+    // 그래도 크면 한 번 더 줄인다(팀 공유 저장 용량 한도 고려).
+    if(dataUrl.length > 1100000) dataUrl = await fileToDownscaledDataURL(fileOrBlob, 1000, 0.55);
+    editingImg = dataUrl;
+    renderImagePreview();
+    // 이미지를 새로 올리면 이전 OCR 결과는 감춘다.
+    document.getElementById('ocrResult').style.display = 'none';
+    document.getElementById('ocrText').value = '';
+  }catch(e){
+    toast(e.message || '이미지 처리 중 오류가 발생했습니다.');
+  }
+}
+
+function approxKB(dataUrl){
+  // base64 문자열 길이로 대략적인 바이트 수 추정
+  return Math.round((dataUrl.length * 0.75) / 1024);
+}
+
+function renderImagePreview(){
+  const empty = document.getElementById('imgDropEmpty');
+  const prev = document.getElementById('imgPreview');
+  if(editingImg){
+    document.getElementById('imgPreviewImg').src = editingImg;
+    const kb = approxKB(editingImg);
+    document.getElementById('imgSizeNote').textContent = `약 ${kb.toLocaleString()} KB (팀 공유 저장)`;
+    empty.style.display = 'none';
+    prev.style.display = 'block';
+  } else {
+    empty.style.display = 'block';
+    prev.style.display = 'none';
+    document.getElementById('imgPreviewImg').src = '';
+  }
+}
+
+// Tesseract.js(브라우저 내 OCR)는 처음 필요할 때만 CDN에서 불러온다.
+let tesseractLoading = null;
+function loadTesseract(){
+  if(window.Tesseract) return Promise.resolve(window.Tesseract);
+  if(tesseractLoading) return tesseractLoading;
+  tesseractLoading = new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+    s.onload = ()=> window.Tesseract ? resolve(window.Tesseract) : reject(new Error('OCR 라이브러리를 불러오지 못했습니다.'));
+    s.onerror = ()=> reject(new Error('OCR 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.'));
+    document.head.appendChild(s);
+  });
+  return tesseractLoading;
+}
+
+async function runOcr(){
+  if(!editingImg){ toast('먼저 캡쳐 이미지를 올려주세요.'); return; }
+  const btn = document.getElementById('ocrBtn');
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'OCR 준비 중...';
+  try{
+    const T = await loadTesseract();
+    btn.textContent = '글자 인식 중... (0%)';
+    const { data } = await T.recognize(editingImg, 'kor+eng', {
+      logger: m=>{
+        if(m.status === 'recognizing text'){
+          btn.textContent = `글자 인식 중... (${Math.round((m.progress||0)*100)}%)`;
+        }
+      }
+    });
+    const text = ((data && data.text) || '').replace(/\n{3,}/g,'\n\n').trim();
+    document.getElementById('ocrText').value = text;
+    document.getElementById('ocrResult').style.display = 'block';
+    if(!text) toast('이미지에서 글자를 찾지 못했습니다. 더 선명한 캡쳐를 사용해 보세요.');
+  }catch(e){
+    toast(e.message || 'OCR 처리 중 오류가 발생했습니다.');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
+// OCR 결과(수정 가능한 textarea)의 내용을 원하는 입력칸에 넣는다.
+// 기존 내용이 있으면 지우지 않고 줄바꿈으로 이어 붙인다.
+function insertOcrToField(fieldId){
+  const text = document.getElementById('ocrText').value.trim();
+  if(!text){ toast('넣을 글자가 없습니다.'); return; }
+  const el = document.getElementById(fieldId);
+  const safe = escapeHtml(text).replace(/\n/g,'<br>');
+  const existing = el.innerHTML.trim();
+  el.innerHTML = existing ? (existing + '<br>' + safe) : safe;
+  updateRichEmptyState(el);
+  toast('입력칸에 넣었습니다. 필요하면 직접 다듬어 주세요.');
+}
+
+function openLightbox(src){
+  if(!src) return;
+  document.getElementById('imgLightboxImg').src = src;
+  document.getElementById('imgLightbox').classList.add('open');
+}
+function closeLightbox(){
+  document.getElementById('imgLightbox').classList.remove('open');
+  document.getElementById('imgLightboxImg').src = '';
+}
+
+// ---- 이미지/OCR 관련 이벤트 연결 (모달 내 정적 요소라 1회만 연결) ----
+document.getElementById('imgDropEmpty').addEventListener('click', ()=>document.getElementById('imgInput').click());
+document.getElementById('imgInput').addEventListener('change', e=>{
+  const f = e.target.files && e.target.files[0];
+  if(f) setImageFromFile(f);
+  e.target.value = ''; // 같은 파일 다시 선택 가능하도록 초기화
+});
+document.getElementById('imgRemoveBtn').addEventListener('click', ()=>{
+  editingImg = '';
+  renderImagePreview();
+  document.getElementById('ocrResult').style.display = 'none';
+  document.getElementById('ocrText').value = '';
+});
+document.getElementById('ocrBtn').addEventListener('click', runOcr);
+document.querySelectorAll('[data-ocr-field]').forEach(btn=>{
+  btn.addEventListener('click', ()=>insertOcrToField(btn.dataset.ocrField));
+});
+
+// 드래그 앤 드롭
+const imgDrop = document.getElementById('imgDrop');
+['dragenter','dragover'].forEach(ev=>imgDrop.addEventListener(ev, e=>{ e.preventDefault(); imgDrop.classList.add('dragover'); }));
+['dragleave','drop'].forEach(ev=>imgDrop.addEventListener(ev, e=>{ e.preventDefault(); imgDrop.classList.remove('dragover'); }));
+imgDrop.addEventListener('drop', e=>{
+  const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f) setImageFromFile(f);
+});
+
+// 붙여넣기(Ctrl+V) — 조합 모달이 열려 있을 때만 클립보드 이미지를 받는다.
+document.addEventListener('paste', e=>{
+  if(!document.getElementById('modalBg').classList.contains('open')) return;
+  const items2 = (e.clipboardData && e.clipboardData.items) || [];
+  for(const it of items2){
+    if(it.type && it.type.startsWith('image/')){
+      const blob = it.getAsFile();
+      if(blob){ setImageFromFile(blob); e.preventDefault(); break; }
+    }
+  }
+});
+
+// 근거 캡쳐 보기 버튼(목록/조합확인기 카드 어디서든) — 이벤트 위임으로 처리
+document.addEventListener('click', e=>{
+  const b = e.target.closest('[data-act="img"]');
+  if(b){ const it = items.find(x=>x.id===b.dataset.id); if(it && it.img) openLightbox(it.img); }
+});
+document.getElementById('imgLightboxClose').addEventListener('click', closeLightbox);
+document.getElementById('imgLightbox').addEventListener('click', e=>{ if(e.target.id==='imgLightbox') closeLightbox(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeLightbox(); });
+
 async function saveItem(){
-  const cat = document.getElementById('f_cat').value.trim();
-  const rate = document.getElementById('f_rate').value.trim();
+  const catHtml = sanitizeRichHtml(document.getElementById('f_cat').innerHTML);
+  const condHtml = sanitizeRichHtml(document.getElementById('f_cond').innerHTML);
+  const rateHtml = sanitizeRichHtml(document.getElementById('f_rate').innerHTML);
+  const noteHtml = sanitizeRichHtml(document.getElementById('f_note').innerHTML);
+
   let valid = true;
-  if(!cat){ document.getElementById('err_cat').style.display='block'; valid=false; } else { document.getElementById('err_cat').style.display='none'; }
-  if(!rate){ document.getElementById('err_rate').style.display='block'; valid=false; } else { document.getElementById('err_rate').style.display='none'; }
+  if(isRichEmpty(catHtml)){ document.getElementById('err_cat').style.display='block'; valid=false; } else { document.getElementById('err_cat').style.display='none'; }
+  if(isRichEmpty(rateHtml)){ document.getElementById('err_rate').style.display='block'; valid=false; } else { document.getElementById('err_rate').style.display='none'; }
   if(!valid) return;
 
   const group = document.getElementById('f_group').value;
   const data = {
-    cat,
-    cond: document.getElementById('f_cond').value.trim(),
+    cat: catHtml,
+    cond: isRichEmpty(condHtml) ? '' : condHtml,
     group,
-    rate,
-    note: document.getElementById('f_note').value.trim(),
+    rate: rateHtml,
+    note: isRichEmpty(noteHtml) ? '' : noteHtml,
     deny: group==='병용 불인정 조합',
+    img: editingImg || '',
   };
 
   if(editingId){
@@ -2779,7 +3379,49 @@ document.getElementById('searchInput').addEventListener('input', render);
 document.getElementById('addBtn').addEventListener('click', ()=>openModal(null));
 document.getElementById('cancelBtn').addEventListener('click', closeModal);
 document.getElementById('saveBtn').addEventListener('click', saveItem);
-document.getElementById('modalBg').addEventListener('click', (e)=>{ if(e.target.id==='modalBg') closeModal(); });
+// 입력칸 안에서 글자를 뒤에서부터(끝→앞) 드래그해 블록 지정하면, 마우스가 잠깐
+// 입력칸 밖(모달 배경) 위를 지나가면서 click 이벤트의 target이 modalBg로 잡혀
+// "배경 클릭"으로 오인되어 편집 중 모달이 닫혀버리는 문제가 있었다.
+// mousedown이 실제로 배경에서 시작된 경우에만 배경 클릭으로 인정해 닫히게 한다.
+let modalBgMouseDownOnBg = false;
+document.getElementById('modalBg').addEventListener('mousedown', (e)=>{
+  modalBgMouseDownOnBg = (e.target.id === 'modalBg');
+});
+document.getElementById('modalBg').addEventListener('click', (e)=>{
+  if(e.target.id==='modalBg' && modalBgMouseDownOnBg) closeModal();
+  modalBgMouseDownOnBg = false;
+});
+
+/* ---- 굵게/색상 서식 툴바 ---- */
+const RICH_FIELD_IDS = ['f_cat','f_cond','f_rate','f_note'];
+RICH_FIELD_IDS.forEach(id=>{
+  const el = document.getElementById(id);
+  el.addEventListener('input', ()=>updateRichEmptyState(el));
+  el.addEventListener('focus', ()=>{
+    // Enter 키가 <div> 대신 <br>을 넣도록 통일 (필드에 포커스가 있어야 적용되는 브라우저가 있어 focus 시점에 재적용)
+    try{ document.execCommand('defaultParagraphSeparator', false, 'br'); }catch(e){}
+  });
+});
+
+document.getElementById('rtBold').addEventListener('mousedown', e=>e.preventDefault());
+document.getElementById('rtBold').addEventListener('click', ()=>{
+  document.execCommand('bold');
+});
+
+document.querySelectorAll('.rt-color').forEach(btn=>{
+  btn.addEventListener('mousedown', e=>e.preventDefault());
+  btn.addEventListener('click', ()=>{
+    const color = btn.dataset.color;
+    if(color){
+      try{ document.execCommand('styleWithCSS', false, true); }catch(e){}
+      document.execCommand('foreColor', false, color);
+    } else {
+      document.execCommand('removeFormat');
+    }
+    const active = document.activeElement;
+    if(active && active.classList && active.classList.contains('rich-input')) updateRichEmptyState(active);
+  });
+});
 
 /* ===================== 약제 목록 ===================== */
 let drugs = [];
@@ -2787,7 +3429,7 @@ let editingDrugId = null;
 
 async function loadDrugs(){
   try{
-    const res = await window.storage.get(DRUG_STORAGE_KEY, true);
+    const res = await storageAdapter.get(DRUG_STORAGE_KEY, true);
     if(res && res.value){
       drugs = JSON.parse(res.value);
     } else {
@@ -2801,10 +3443,27 @@ async function loadDrugs(){
 }
 
 async function persistDrugs(){
+  let localOk = true;
   try{
-    await window.storage.set(DRUG_STORAGE_KEY, JSON.stringify(drugs), true);
+    await storageAdapter.set(DRUG_STORAGE_KEY, JSON.stringify(drugs), true);
   }catch(e){
-    toast('약제 저장에 실패했습니다. 다시 시도해 주세요.');
+    localOk = false;
+    console.error('로컬 저장 오류:', e && e.name, e && e.message);
+  }
+
+  let fbOk = null;
+  if(fbConnected && fbDrugsRef){
+    fbOk = await pushDrugsToFirebase();
+  }
+
+  if(!localOk && fbOk !== true){
+    if(fbOk === false){
+      toast('약제 저장에 실패했습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.');
+    } else {
+      toast('실시간 공유가 연결되어 있지 않아 이 브라우저에만 저장하지 못했습니다. 새로고침 후 다시 시도해 주세요.');
+    }
+  } else if(localOk && fbConnected && fbOk === false){
+    toast('이 브라우저에는 저장됐지만 팀 공유 저장소 반영에는 실패했습니다. 잠시 후 다시 시도해 주세요.');
   }
 }
 
@@ -3121,6 +3780,194 @@ document.getElementById('drugModalBg').addEventListener('click', (e)=>{ if(e.tar
 /* ===================== 조합 확인기 ===================== */
 let selectedDrugIds = [];
 
+// 조합 확인기에서 조회했던 약제 조합 이력. 개인 브라우저에만 저장되며(팀 공유 아님),
+// 최근에 봤던 조합을 클릭 한 번으로 다시 불러올 수 있게 한다.
+const CHECKER_HISTORY_KEY = 'diabetes-checker-history-v1';
+const CHECKER_HISTORY_MAX = 50;        // 전체 보관 개수
+const CHECKER_HISTORY_INLINE = 6;      // 인라인 칩으로 바로 보여줄 최근 개수
+let checkerHistory = loadCheckerHistory();
+
+function loadCheckerHistory(){
+  try{
+    const raw = localStorage.getItem(CHECKER_HISTORY_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(Array.isArray(parsed)) return parsed;
+    }
+  }catch(e){}
+  return [];
+}
+function saveCheckerHistory(){
+  try{ localStorage.setItem(CHECKER_HISTORY_KEY, JSON.stringify(checkerHistory)); }catch(e){}
+}
+function historyKeyOf(ids){ return ids.slice().sort().join(','); }
+
+// 선택한 약제들의 "계열 개수". 복합제(한 알에 여러 성분)는 1개여도 계열이 여러 개일 수 있다.
+function historyClassCount(ids){
+  let cs = [];
+  ids.forEach(id=>{ const d=drugs.find(x=>x.id===id); if(d) cs = cs.concat(d.classes||[]); });
+  return new Set(cs).size;
+}
+
+// 이력 항목 -> 표시용 정보(계열 요약, 약품명, 유효 여부)
+function historyEntryInfo(h){
+  const hdrugs = h.ids.map(id=>drugs.find(d=>d.id===id)).filter(Boolean);
+  let classSet = [];
+  hdrugs.forEach(d=>{ classSet = classSet.concat(d.classes||[]); });
+  classSet = Array.from(new Set(classSet));
+  const label = classSet.map(c=>CLASS_LABEL[c]||c).join(' + ') || (hdrugs.length ? `약제 ${hdrugs.length}개` : '(삭제된 약제)');
+  const names = hdrugs.map(d=>d.name).join(', ');
+  return { hdrugs, classSet, label, names };
+}
+
+// 삭제된 약제만 남아 계열이 2개 미만이 된 이력은 정리한다.
+function pruneCheckerHistory(){
+  const before = checkerHistory.length;
+  checkerHistory = checkerHistory.filter(h => historyClassCount(h.ids) >= 2);
+  if(checkerHistory.length !== before) saveCheckerHistory();
+}
+
+// 약제를 추가/복원할 때마다 호출된다. "계열" 2개 이상일 때 기록하며(복합제 1개도 포함),
+// 직전 이력이 이번 조합의 "부분집합"이면(같은 조합에 약을 하나 더 추가한 경우) 새로 쌓지 않고 그 항목을 갱신한다.
+function recordCheckerHistory(){
+  if(historyClassCount(selectedDrugIds) < 2) return;
+  const ids = selectedDrugIds.slice();
+  const key = historyKeyOf(ids);
+
+  const existingIdx = checkerHistory.findIndex(h => historyKeyOf(h.ids) === key);
+  if(existingIdx >= 0){
+    checkerHistory.splice(existingIdx, 1); // 이미 있으면 맨 앞으로 끌어올림
+  } else if(checkerHistory.length){
+    const prev = checkerHistory[0];
+    const prevIsSubset = prev.ids.length < ids.length && prev.ids.every(id => ids.includes(id));
+    if(prevIsSubset) checkerHistory.shift(); // 같은 조합에 약을 더한 경우 직전 항목을 대체
+  }
+  checkerHistory.unshift({ ids, ts: Date.now() });
+  if(checkerHistory.length > CHECKER_HISTORY_MAX) checkerHistory = checkerHistory.slice(0, CHECKER_HISTORY_MAX);
+  saveCheckerHistory();
+}
+
+function restoreHistory(h){
+  if(!h) return;
+  selectedDrugIds = h.ids.filter(id => drugs.find(d=>d.id===id)).slice(0, 4); // 유효한 약제만 복원
+  recordCheckerHistory(); // 다시 최근으로 끌어올림
+  renderChecker();
+}
+function deleteHistoryAt(idx){
+  checkerHistory.splice(idx, 1);
+  saveCheckerHistory();
+}
+function clearAllHistory(){
+  if(!confirm('조회 이력을 모두 지울까요?')) return false;
+  checkerHistory = [];
+  saveCheckerHistory();
+  return true;
+}
+
+// 인라인(조합 확인기 화면 안) 이력: 최근 몇 개만 칩으로, 나머지는 "전체 이력 보기"로
+function renderCheckerHistory(){
+  const el = document.getElementById('checkerHistory');
+  if(!el) return;
+  pruneCheckerHistory();
+
+  if(checkerHistory.length === 0){ el.innerHTML = ''; return; }
+
+  const shown = checkerHistory.slice(0, CHECKER_HISTORY_INLINE);
+  const rows = shown.map((h, idx)=>{
+    const info = historyEntryInfo(h);
+    return `<span class="history-chip" data-idx="${idx}" title="${escapeHtml(info.names)}">
+        <span class="hc-label">${escapeHtml(info.label)}</span>
+        <button class="hc-del" data-del="${idx}" title="이 이력 삭제">&times;</button>
+      </span>`;
+  }).join('');
+  const more = checkerHistory.length > CHECKER_HISTORY_INLINE
+    ? `<button class="history-more" id="historyMoreBtn">+${checkerHistory.length - CHECKER_HISTORY_INLINE}개 더 · 전체 이력 보기</button>`
+    : '';
+
+  el.innerHTML = `<div class="history-head">
+      <span class="title">최근 조회한 조합 <span class="hcount">${checkerHistory.length}건</span></span>
+      <span class="history-head-actions">
+        <button class="history-link" id="historyViewAllBtn">전체 이력 보기</button>
+        <button class="history-clear" id="historyClearBtn">이력 전체 삭제</button>
+      </span>
+    </div>
+    <div class="history-list">${rows}${more}</div>`;
+
+  el.querySelectorAll('.history-chip').forEach(chip=>{
+    chip.addEventListener('click', ()=> restoreHistory(checkerHistory[Number(chip.dataset.idx)]));
+  });
+  el.querySelectorAll('.hc-del').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      deleteHistoryAt(Number(btn.dataset.del));
+      renderCheckerHistory();
+    });
+  });
+  const viewAll = document.getElementById('historyViewAllBtn');
+  if(viewAll) viewAll.addEventListener('click', openHistoryModal);
+  const moreBtn = document.getElementById('historyMoreBtn');
+  if(moreBtn) moreBtn.addEventListener('click', openHistoryModal);
+  const clearBtn = document.getElementById('historyClearBtn');
+  if(clearBtn) clearBtn.addEventListener('click', ()=>{ if(clearAllHistory()) renderCheckerHistory(); });
+}
+
+// 전체 이력 모달
+function formatHistoryTime(ts){
+  if(!ts) return '';
+  const d = new Date(ts);
+  const diff = Math.floor((Date.now() - ts)/1000);
+  if(diff < 60) return '방금';
+  if(diff < 3600) return `${Math.floor(diff/60)}분 전`;
+  if(diff < 86400) return `${Math.floor(diff/3600)}시간 전`;
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mi = String(d.getMinutes()).padStart(2,'0');
+  return `${mm}/${dd} ${hh}:${mi}`;
+}
+
+function renderHistoryModalList(){
+  const listEl = document.getElementById('historyModalList');
+  if(!listEl) return;
+  pruneCheckerHistory();
+  if(checkerHistory.length === 0){
+    listEl.innerHTML = `<div class="empty">저장된 조회 이력이 없습니다.</div>`;
+    return;
+  }
+  listEl.innerHTML = checkerHistory.map((h, idx)=>{
+    const info = historyEntryInfo(h);
+    return `<div class="hist-row">
+        <div class="hist-row-main">
+          <div class="hist-row-label">${escapeHtml(info.label)}</div>
+          <div class="hist-row-names" title="${escapeHtml(info.names)}">${escapeHtml(info.names)}</div>
+          <div class="hist-row-time">${formatHistoryTime(h.ts)}</div>
+        </div>
+        <div class="hist-row-actions">
+          <button class="btn btn-sm btn-primary" data-hist-load="${idx}">불러오기</button>
+          <button class="btn btn-sm danger-ghost" data-hist-del="${idx}">삭제</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  listEl.querySelectorAll('[data-hist-load]').forEach(b=>{
+    b.addEventListener('click', ()=>{ restoreHistory(checkerHistory[Number(b.dataset.histLoad)]); closeHistoryModal(); });
+  });
+  listEl.querySelectorAll('[data-hist-del]').forEach(b=>{
+    b.addEventListener('click', ()=>{ deleteHistoryAt(Number(b.dataset.histDel)); renderHistoryModalList(); renderCheckerHistory(); });
+  });
+}
+
+function openHistoryModal(){
+  renderHistoryModalList();
+  document.getElementById('historyModalBg').classList.add('open');
+}
+function closeHistoryModal(){
+  document.getElementById('historyModalBg').classList.remove('open');
+}
+document.getElementById('historyModalCloseBtn').addEventListener('click', closeHistoryModal);
+document.getElementById('historyModalBg').addEventListener('click', e=>{ if(e.target.id==='historyModalBg') closeHistoryModal(); });
+document.getElementById('historyModalClearBtn').addEventListener('click', ()=>{ if(clearAllHistory()){ renderHistoryModalList(); renderCheckerHistory(); } });
+
 function renderCheckerResults(){
   const q = document.getElementById('checkerSearchInput').value.trim();
   const root = document.getElementById('checkerResults');
@@ -3140,6 +3987,7 @@ function renderCheckerResults(){
       if(selectedDrugIds.length>=4){ toast('최대 4개까지 선택할 수 있습니다.'); return; }
       selectedDrugIds.push(row.dataset.id);
       document.getElementById('checkerSearchInput').value='';
+      recordCheckerHistory();
       renderChecker();
     });
   });
@@ -3178,8 +4026,10 @@ function renderCheckerSummaryAndMatches(){
   const summaryText = classSet.map(c=>CLASS_LABEL[c]||c).join(' + ');
   summaryEl.innerHTML = `<div class="combo-summary">선택 조합 계열: ${escapeHtml(summaryText)}</div>`;
 
-  if(selectedDrugs.length < 2){
-    resultEl.innerHTML = `<div class="empty">비교할 약제를 1개 더 선택해 주세요.</div>`;
+  // 약제 "개수"가 아니라 "계열 개수"로 판단한다. 제미다파정처럼 한 알에 DPP4i+SGLT2i가
+  // 모두 들어있는 복합제는 1개만 선택해도 이미 2개 계열 조합이므로 바로 조회되어야 한다.
+  if(classSet.length < 2){
+    resultEl.innerHTML = `<div class="empty">비교할 약제를 1개 더 선택해 주세요. (선택한 약제의 계열이 아직 1개뿐입니다)</div>`;
     return;
   }
 
@@ -3216,12 +4066,13 @@ function renderCheckerCard(it){
   return `
       <div class="item-card ${cardClass(it)}">
         <div class="item-main">
-          <p class="cat">${escapeHtml(it.cat)} <span style="font-weight:500;color:var(--text-mute);font-size:12px;">(${escapeHtml(it.group)})</span></p>
-          ${it.cond ? `<p class="cond">${escapeHtml(it.cond)}</p>` : ''}
+          <p class="cat">${it.cat} <span style="font-weight:500;color:var(--text-mute);font-size:12px;">(${escapeHtml(it.group)})</span></p>
+          ${!isRichEmpty(it.cond) ? `<p class="cond">${it.cond}</p>` : ''}
           <div class="rate-row">
-            <span class="rate-pill ${pillClass(it)}">${escapeHtml(it.rate)}</span>
+            <span class="rate-pill ${pillClass(it)}">${it.rate}</span>
           </div>
-          ${it.note ? `<p class="item-note">${escapeHtml(it.note)}</p>` : ''}
+          ${!isRichEmpty(it.note) ? `<p class="item-note">${it.note}</p>` : ''}
+          ${it.img ? `<button class="evidence-btn" data-act="img" data-id="${it.id}">📷 근거 캡쳐 보기</button>` : ''}
         </div>
       </div>`;
 }
@@ -3230,6 +4081,7 @@ function renderChecker(){
   renderCheckerChips();
   renderCheckerResults();
   renderCheckerSummaryAndMatches();
+  renderCheckerHistory();
 }
 
 document.getElementById('checkerSearchInput').addEventListener('input', renderCheckerResults);
@@ -3251,6 +4103,8 @@ document.querySelectorAll('.main-tab').forEach(b=>b.addEventListener('click', ()
 switchMainTab('rules');
 loadDrugs();
 loadItems();
+setSyncUI('connecting');
+initFirebase();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </body>
